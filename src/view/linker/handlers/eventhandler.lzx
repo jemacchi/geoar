@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="eventhandler" oninit="Debug.write(this)">
+	<attribute name="link" value="null" />
+	<attribute name="events" value="${new Array()}" />
+	<attribute name="methodname" type="string" value="" />
+	<attribute name="del" value="null" />
+	
+	<event name="onaddevent" />
+	
+	<handler name="onaddevent" args="name">
+	<![CDATA[
+		if ((this.link) && (this.link.getSender()))
+			this.registerEvent(name);	
+	]]>
+	</handler>
+	
+	<handler name="onmethodname">
+	<![CDATA[
+		if ((this.link) && (this.link.getReceiver()))
+			this.retrieveReceiver();
+	]]>
+	</handler>	
+	
+	<method name="addEventName" args="n">
+		this.events.push(n);
+		this.onaddevent.sendEvent(n);
+	</method>
+	
+	<method name="getEventName" >
+		return this.eventname;
+	</method>
+	
+	<method name="setMethodName" args="n">
+		this.setAttribute("methodname", n);
+	</method>
+	
+	<method name="getMethodName" >
+		return this.methodname;
+	</method>
+	
+	<method name="setLink" args="l">
+	<![CDATA[
+		this.link = l;
+		
+		if (this.link.getReceiver())
+			this.retrieveReceiver();
+			
+		if (this.link.getSender())
+			this.register();	
+		
+		new LzDelegate(this, "retrieveReceiver", this.link, "onreceiver");	
+		new LzDelegate(this, "register", this.link, "onsender");
+	]]>
+	</method>
+	
+	<method name="getLink">
+		return this.link;
+	</method>
+	
+	<method name="retrieveReceiver">
+		if (this.methodname!= "")
+			this.del = new LzDelegate(this.link.getReceiver(), this.methodname);
+	</method>
+	
+	<method name="register">
+	<![CDATA[
+		if (this.methodname != "")
+			for (var i=0; i<this.events.length;i++)
+				this.del.register(this.link.getSender(), this.events[i]);
+	]]>
+	</method>
+	
+	<method name="registerEvent" args="name">
+		if (name != ""){
+			this.events.push(name);
+			this.del.register(this.link.getSender(), name)
+		}
+	</method>
+	
+	<method name="disable">
+		if (this.del)
+			this.del.disable();
+	</method>
+	
+	<method name="enable" >
+		if (this.del)
+			this.del.enable();
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

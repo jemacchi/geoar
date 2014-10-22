@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="abstractcommand.lzx" />
+
+<class name="centeratcommand" extends="abstractcommand">
+	
+	<attribute name="lat" type="string" value="" />
+	<attribute name="lon" type="string" value="" />
+
+	<method name="execute">
+	    //Debug.write("Latitude (centeratcommand) "+this.lat);
+	    //Debug.write("Longitude (centeratcommand) "+this.lon);
+		this.visor.centerOnWGS84Coord(new wgs84coordinate(null, {xcoord: parseFloat(this.lon), ycoord: parseFloat(this.lat)}));
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

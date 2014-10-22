@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="abstracttilevisor.lzx" />
+<include href="references/pointview.lzx" />
+<include href="widgets/loadingview.lzx" />
+
+<class name="tilevisor" extends="abstracttilevisor">
+
+	<attribute name="createRefDel" value="null" />
+	<attribute name="currentrefno" value="0" type="number" />
+
+	<event name="ontiledown" />
+	<event name="onimageloaded" />
+	
+	<handler name="onvisible">
+	<![CDATA[
+		if ((!this.visible) && (!this.tileimage.lastloaded == " "))
+			this.destroy();
+	]]>
+	</handler>
+
+
+	<method name="createRefViews" >
+	<![CDATA[
+      this.currentrefno = 0;
+      
+      if (this.tile.getReferences().length) {
+        if (!this.createRefDel) {
+          this.createRefDel = new LzDelegate(this, "createRef");
+        }
+        this.createRef();
+      }
+	]]>
+    </method>
+    
+    <method name="createRef" >
+    <![CDATA[
+	  var refs = this.tile.getReferences();
+      this.drawReference(refs[this.currentrefno]);
+      
+      this.currentrefno++;
+      
+      if (this.currentrefno < this.tile.getReferences().length) {
+        //still more references to create
+        LzIdle.callOnIdle(this.createRefDel);
+      }
+    ]]>
+    </method>
+    
+	<method name="drawTile">
+	<![CDATA[
+		if (this.tile.isOutOfBounds())
+			return;		
+		
+		this.tileimage.setAttribute('src', this.tile.getRequestQueryString());
+		
+		this.createRefViews();
+		
+		//var refs = this.tile.getReferences();
+		//for (var i=0; i<refs.length;i++)
+		//	this.drawReference(refs[i]);
+	]]>
+	</method>
+	
+	<method name="translateXCoordToPx" args="xc">
+		var orX = this.parentvisor.translateXCoordToPx(xc);
+		//Debug.write("COORD X: " + xc + " ORIGIN X: " + orX + "TILE X: " + (orX - this.x));
+		return (orX - this.x);
+	</method>
+	
+	<method name="translateYCoordToPx" args="yc">
+		var orY = this.parentvisor.translateYCoordToPx(yc);
+		//Debug.write("COORD Y: " + yc + " ORIGIN Y: " + orY + "TILE Y: " + (orY - this.y));
+		return (orY - this.y);
+	</method>
+	
+	<method name="drawReference" args="ref" >
+		if (!this.tile.getBBox())
+			return;
+		switch (ref.getType()){
+			case "point": 	var px= this.translateXCoordToPx(ref.getPointX());
+									var py= this.translateYCoordToPx(ref.getPointY());
+									var pv = new pointview(this, {x: px, y: py});									
+									pv.setPoint(ref); 
+									this.refs.push(pv);
+								//	Debug.write(pv);
+									pv.bringToFront();
+									new LzDelegate(this, "notifyOnReference", pv, "onreferenceview");
+									break;
+		}
+	</method>
+	
+	<method name="notifyOnReference" args="refview">
+		this.parentvisor.onreferenceview.sendEvent(refview);
+	</method>
+	
+	<method name="showReferences">
+	<![CDATA[
+		//Debug.write("SHOWING REFERENCES");
+		for (var i=0; i<this.refs.length; i++)
+			this.refs[i].bringToFront();
+	]]>
+	</method>
+	
+	<handler name="onmouseup">
+		parent.onmouseup.sendEvent();
+		
+	</handler>
+	
+	<handler name="onmousedown">
+		parent.onmousedown.sendEvent();
+		this.ontiledown.sendEvent(this);
+	</handler>
+	
+	<handler name="onclick">
+		//Debug.write("ONCLICK: " + this.getKey());
+		//Debug.write(this);
+		parent.onclick.sendEvent();
+	</handler>
+	
+	<handler name="onmouseover">
+		this.ontileover.sendEvent();
+	</handler>
+	
+	<image name="tileimage" width="${classroot.width}" height="${classroot.height}" src="" forcereload="true">
+		<handler name="oninit">
+			//Debug.write('Tile initialization...');
+			this.loading.setVisible(true);
+			this.loading.bringToFront();
+		</handler>
+		<handler name="onload">
+		    //Debug.write('Loading tile...');
+		    this.fadeDelegate = new LzDelegate( this, "fadeLoading" );
+	        LzTimer.addTimer( this.fadeDelegate, 1500 );
+			if (!this.visible)
+				this.destroy(); else
+				classroot.onimageloaded.sendEvent();
+		</handler>
+		<handler name="onerror">
+			//Debug.write('Error loading tile !');
+			this.loading.setVisible(false);
+		</handler>
+		<handler name="ontimeout">
+			Debug.write('Timeout loading tile !');
+            Debug.write(this.getAttribute('src'));
+            //this.loading.setAttribute('opacity',1);
+            //this.loading.setVisible(true);
+            //this.loading.bringToFront();
+            //this.loadNow(this.getAttribute('src'));
+		</handler>
+	    <method name="fadeLoading">
+	        this.loading.animate("opacity", 0.0, 1000);
+	    </method>
+		<loadingview name="loading" stretches="both" visible="true" align="center" valign="middle" opacity="1"></loadingview>
+	</image>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

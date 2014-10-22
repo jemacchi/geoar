@@ -1,0 +1,432 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="../utils/hashtable.lzx" />
+<include href="widgets/selectionbox.lzx" />
+<include href="../model/srs/pixelsrs.lzx" />
+
+<class name="mapvisorlayer" extends="view">
+	<attribute name="mapvisor" value="null" />
+	<attribute name="selectionBox" value="null" />
+	<attribute name="drawntiles" value="${new hashtable()}" />
+	<attribute name="tileover" type="boolean" value="false" />
+	<attribute name="tileselected" value="false" />
+	<attribute name="x" value="0" />
+	<attribute name="y" value="0" />
+	<attribute name="delselectionbox" value="${new LzDelegate(this, 'updateSelectionBox')}" />
+	<attribute name="refselected" value="${new Array()}" />
+	
+	<attribute name="drag_minx" value="null" />
+	<attribute name="drag_maxx" value="null" />
+	<attribute name="drag_miny" value="null" />
+	<attribute name="drag_maxy" value="null" />
+	
+	<dragstate name="dragger" drag_axis="both" />
+	
+	<method name="getMapVisor">
+		return this.mapvisor;
+	</method>
+	
+	<method name="setMapVisor" args="v" >
+		this.setAttribute("mapvisor", v);
+	</method>
+	
+	<method name="getTileSelected">
+		return this.tileselected;
+	</method>
+	
+	<handler name="onmouseover">
+		this.mapvisor.onmouseover.sendEvent();
+	</handler>
+	
+	<handler name="onmousedown">
+		this.mapvisor.onmousedown.sendEvent();
+	</handler>
+	
+	<handler name="onmouseup">
+		this.mapvisor.onmouseup.sendEvent();
+	</handler>
+	
+	<handler name="onclick">
+		this.mapvisor.onclick.sendEvent();
+	</handler>
+	
+	<handler name="onx">
+		if (this.mapvisor==null)
+			return;
+		
+		var newx = this.mapvisor.translatePxToWGS84Long(-this.x);
+		//Debug.write("X: " + (this.x) + " TO:  " +  newx);
+		//var bbox= this.mapvisor.getCurrentBBox();
+		var vbbox = this.mapvisor.getVisibleBBox();
+		var srs= vbbox.getSrs();
+		
+		if (this.mapvisor.isLinkeable()){
+			this.mapvisor.onmovetoWGS84long.sendEvent(newx);
+			if (srs)
+				this.mapvisor.onmoverelWGS84long.sendEvent(newx - srs.xToWGS84Long(vbbox.minx));
+		}
+
+		//this.mapvisor.onrelx.sendEvent(this.mapvisor.translatePxToWGS84Long(bbox.minx) - newx);
+		
+		vbbox.maxx = this.mapvisor.translatePxToXCoord(-this.x + this.width);
+		vbbox.minx = this.mapvisor.translatePxToXCoord(-this.x);
+	</handler>
+	
+	<handler name="ony">
+		if (this.mapvisor==null)
+			return;
+		
+		var newy = this.mapvisor.translatePxToWGS84Lat(-this.y);
+		//Debug.write("Y: " + (-this.y) + " TO:  " +  newy);
+		var vbbox = this.mapvisor.getVisibleBBox();
+		var srs= vbbox.getSrs();
+		
+		if (this.mapvisor.isLinkeable()){
+			this.mapvisor.onmovetoWGS84lat.sendEvent(newy);
+			if (srs)
+				this.mapvisor.onmoverelWGS84lat.sendEvent(newy - srs.yToWGS84Lat(vbbox.maxy));
+		}
+			
+		//this.mapvisor.onrely.sendEvent(this.mapvisor.translatePxToWGS84Lat(bbox.maxy) - newy);
+
+		vbbox.miny = this.mapvisor.translatePxToYCoord(-this.y+ this.height);
+		vbbox.maxy = this.mapvisor.translatePxToYCoord(-this.y);
+	</handler>
+	
+	<method name="moveRelxPxSelectedArea" args="relx">
+		if (!this.selectionBox)
+			return;
+			
+		this.selectionBox.setAttribute("x", this.selectionBox.x + relx);
+	</method>
+	
+	<method name="moveRelyPxSelectedArea" args="rely">
+		if (!this.selectionBox)
+			return;
+		
+		//Debug.write("MOVING SEL AREA Y: " + rely);
+		
+		this.selectionBox.setAttribute("y", this.selectionBox.y + rely);
+	</method>
+	
+	<method name="moveSelectedAreaToX" args="newx">
+		if (!this.selectionBox)
+			return;
+			
+		this.selectionBox.setAttribute("x", newx);
+	</method>
+	
+	<method name="moveSelectedAreaToY" args="newy">
+		if (!this.selectionBox)
+			return;
+			
+		this.selectionBox.setAttribute("y", newy);
+	</method>
+	
+	<method name="getSelectionBoxXMovement">
+		if (!this.mapvisor.isLinkeable())
+			return;
+			
+		var xcoord = this.mapvisor.translatePxToWGS84Long(this.selectionBox.x);
+		this.mapvisor.onmoveselectiontoWGS84long.sendEvent(xcoord);
+		
+		//var defxcoord = this.mapvisor.translatePxToWGS84Long(this.selectionBox.defaultx);
+		//Debug.write("AREA X: " + this.selectionBox.x);
+		//Debug.write("MOVING SELECTED AREA TO X: " + xcoord);
+		//this.selectionBox.lastxcoord = xcoord;
+	</method>
+	
+	<method name="getSelectionBoxYMovement">
+		if (!this.mapvisor.isLinkeable())
+			return;
+			
+		var ycoord = this.mapvisor.translatePxToWGS84Lat(this.selectionBox.y);
+		this.mapvisor.onmoveselectiontoWGS84lat.sendEvent(ycoord);
+		
+		//Debug.write("AREA Y: " + this.selectionBox.y);
+		//Debug.write("MOVING SELECTED AREA TO Y: " + ycoord);
+		//var defycoord = this.mapvisor.translatePxToWGS84Lat(this.selectionBox.defaulty);		
+		//this.selectionBox.lastycoord = ycoord;
+	</method>
+	
+	<method name="applyDrag">
+		this.dragger.apply();
+		this.mapvisor.onstartdrag.sendEvent();
+	</method>
+	
+	<method name="removeDrag">
+		this.dragger.remove();
+		
+		if (this.mapvisor.hasImplicitMapLoading())
+			this.drawLayer();
+		
+		this.mapvisor.onmove.sendEvent();
+		this.mapvisor.onstopdrag.sendEvent();
+	</method>
+	
+	<method name="applySelectionDrag">
+		this.mapvisor.onstartdragselection.sendEvent();
+	</method>
+	
+	<method name="removeSelectionDrag">
+		//Debug.write("REMOVING DRAG");
+		this.mapvisor.onmoveselection.sendEvent();
+		this.mapvisor.onstopdragselection.sendEvent();
+	</method>	
+	
+	<method name="setSelectionDraggeable" args="drag">
+		this.selectionBox.setAttribute("draggeable", drag);
+	</method>
+	
+	<method name="drawLayer">
+		//Debug.write("DRAWING... ");
+		this.mapvisor.getTileManager().generateAndShowVisibleTiles(this);
+		this.mapvisor.getTileManager().generateAndShowSurroundingTiles(this);
+	</method>	
+
+	<method name="applyDragConstraints" args="minx, maxx, miny, maxy">
+		this.dragger = new dragstate(this, {drag_axis : "both", drag_min_x : minx, drag_max_x : maxx, drag_min_y : miny, drag_max_y : maxy});
+		Debug.write(this.dragger);
+	</method>
+	
+	<method name="refresh">
+	<![CDATA[
+		var val = this.drawntiles.getValues();
+		for (var i in val)
+			val[i].drawTile();
+	]]>
+	</method>
+	
+	<method name="clear">
+	<![CDATA[	
+		var limit = this.subviews.length -1;
+		
+		for (var i=limit;i>=0;i--)
+			this.subviews[i].setVisible(false);
+		
+		this.setX(0);
+		this.setY(0);
+		this.drawntiles.clear();
+		//Debug.inspect(drawntiles);
+	]]>
+	</method>
+	
+	<method name="insertTile" args="tilevisor">
+		var granularity = this.mapvisor.getGranularity();
+		var defaultwidth= this.mapvisor.getTileWidthPx();
+		var defaultheight= this.mapvisor.getTileHeightPx();
+		tilevisor.setAttribute('x', defaultwidth * tilevisor.getPosx());
+		tilevisor.setAttribute('y', defaultheight * tilevisor.getPosy());
+		
+		tilevisor.setWidth(defaultwidth);
+		tilevisor.setHeight(defaultheight);
+		tilevisor.setParentVisor(this.mapvisor);
+		tilevisor.getTile().addReferences(this.mapvisor.getTileReferences(tilevisor.getKey()));
+		//Debug.write(tilevisor.getTile().getReferences());
+		this.drawntiles.put(tilevisor.getKey(), tilevisor);
+		new LzDelegate(this, "visortileover", tilevisor, "ontileover");
+		new LzDelegate(this, "visortiledown", tilevisor, "onmousedown");
+	</method>
+	
+	<method name="visortiledown" args="d">
+		this.tileselected = d;
+	</method>
+
+	<method name="visortileover">
+		if (!this.tileover){
+			this.tileover = true;
+			this.onmouseover.sendEvent();
+		}
+	</method>	
+	
+	<method name="isTileDrawn" args="posx, posy">
+		return this.drawntiles.contains(new String(posy) + new String(posx));
+	</method>
+	
+	<method name="setSelectionInitialParams">
+		if (!this.selectionBox)
+			return;
+
+		this.selectionBox.setAttribute("x", this.getMouse('x'));
+		this.selectionBox.setAttribute("y", this.getMouse('y'));
+		this.selectionBox.setAttribute("lastx", this.getMouse('x'));
+		this.selectionBox.setAttribute("lasty", this.getMouse('y'));
+		//this.selectionBox.setAttribute("defaultx", this.getMouse('x'));
+		//this.selectionBox.setAttribute("defaulty", this.getMouse('y'));
+		
+		this.delselectionbox.enable();
+		this.delselectionbox.register(LzIdle, "onidle");
+	</method>
+	
+	<method name="setSelectionCustomParams" args="x, y, width, height">
+		if (!this.selectionBox)
+			return;
+			
+		this.selectionBox.setAttribute("x", x);
+		this.selectionBox.setAttribute("y", y);
+		this.selectionBox.setAttribute("lastx", x);
+		this.selectionBox.setAttribute("lasty", y);
+		this.selectionBox.setAttribute("defaultx", x);
+		this.selectionBox.setAttribute("defaulty", y);
+		
+		this.selectionBox.setAttribute("width", width);
+		this.selectionBox.setAttribute("height", height);
+	</method>
+	
+	<method name="activateSelectionBox">
+		if (!this.selectionBox){
+			this.selectionBox = new selectionbox(this, {width:0, height:0, x:0, y:0});
+			new LzDelegate(this, "getSelectionBoxXMovement", this.selectionBox, "onx");
+			new LzDelegate(this, "getSelectionBoxYMovement", this.selectionBox, "ony");
+			new LzDelegate(this, "applySelectionDrag", this.selectionBox, "onstartdrag");
+			new LzDelegate(this, "removeSelectionDrag", this.selectionBox, "onstopdrag");	
+		}
+		
+		this.selectionBox.activate();
+	</method>
+	
+	<method name="showSelectionBox">
+		if (this.selectionBox)
+			this.selectionBox.activate();
+	</method>
+	
+	<method name="deactivateSelectionBox">	
+		this.selectionBox.deactivate();
+		//this.selectionBox.destroy();
+		this.selectionBox = null
+	</method>
+	
+	<method name="moveRelXSelectionBox" args="newx">
+		if (!this.selectionBox)
+			return;
+			
+		this.selectionBox.setAttribute("x", this.selectionBox.x + newx);
+	</method>
+
+	<method name="moveRelYSelectionBox" args="newy">
+		if (!this.selectionBox)
+			return;
+		this.selectionBox.setAttribute("y", this.selectionBox.y + newy);
+	</method>
+	
+	<method name="updateSelectionBox">
+		this.selectionBox.setAttribute("width",  this.getMouse('x') - this.selectionBox.x);
+		this.selectionBox.setAttribute("height", this.getMouse('y') - this.selectionBox.y);
+	</method>
+	
+	<method name="boxSelected">
+	<![CDATA[
+		var sel = new Array();		
+		var x1 = this.selectionBox.x;
+		var x2 = this.selectionBox.x  + this.selectionBox.width;
+		var y1 = this.selectionBox.y;
+		var y2 = this.selectionBox.y  + this.selectionBox.height;
+		
+		var newbbox = new boundingbox();
+		
+		if (x1<x2){
+			newbbox.setMinx(x1);
+			newbbox.setMaxx(x2);
+		} else {
+			newbbox.setMinx(x2);
+			newbbox.setMaxx(x1);
+		}
+		
+		if (y1<y2){
+			newbbox.setMiny(y1);
+			newbbox.setMaxy(y2);
+		} else {
+			newbbox.setMiny(y2);
+			newbbox.setMaxy(y1);		
+		}
+		
+		newbbox.setSrs(new pixelsrs());
+		this.mapvisor.onselection.sendEvent(newbbox);
+		this.delselectionbox.unregisterAll();
+		this.delselectionbox.disable();
+	]]>
+	</method>
+	
+	<method name="getSelectedTiles" args="area">
+	<![CDATA[
+		var arr = new Array();
+		//Debug.write(area);
+		var botilex = this.mapvisor.getTileXIndex(area.getMaxx());
+		var botiley = this.mapvisor.getTileYIndex(area.getMaxy());
+		
+		var upptilex = this.mapvisor.getTileXIndex(area.getMinx());
+		var upptiley = this.mapvisor.getTileYIndex(area.getMiny());
+		
+		//Debug.write("UPPERTILE: " + "X: " + new String (upptilex) + " Y: " +new String(upptiley));
+		//Debug.write("BOTTOMTILE: " + "X: " + new String (botilex) + " Y: " + new String(botiley));
+		//Debug.write(this.drawntiles);
+		
+		for (var i = upptiley; i <= botiley; i++){
+			for (var j = upptilex; j <= botilex; j++)
+				arr.push(this.drawntiles.get(new String (i) + new String(j)));
+		}
+		
+		return arr;
+	]]>
+	</method>
+	
+	<method name="selectReferences" args="area">
+	<![CDATA[
+		var tiles = this.getSelectedTiles(area);
+		//Debug.write(tiles);
+		var bbox = this.mapvisor.transformPxArea(area);
+		var refs = new Array();
+		for (var i=0; i<tiles.length;i++)
+			refs = refs.concat(tiles[i].getReferencesViews());
+			
+		for (var i=0; i<refs.length;i++)
+			if (refs[i].getReference().isInArea(bbox)){
+				refs[i].setSelected(true);
+				this.refselected.push(refs[i]);
+			}
+	]]>
+	</method>
+	
+	<method name="clearSelection">
+	<![CDATA[
+		for (var i=0; i<this.refselected.length;i++)
+			this.refselected[i].setSelected(false);
+			
+		this.refselected = new Array();
+	]]>
+	</method>
+	
+	<method name="getCurrentMinXCoord">
+		return this.mapvisor.translatePxToXCoord(-this.x);
+	</method>
+	
+	<method name="getCurrentMaxXCoord">
+		return this.mapvisor.translatePxToXCoord(-this.x + this.width);
+	</method>
+	
+	<method name="getCurrentMinYCoord">
+		return this.mapvisor.translatePxToYCoord(-this.y + this.height);
+	</method>
+
+	<method name="getCurrentMaxYCoord">
+		return this.mapvisor.translatePxToYCoord(-this.y);
+	</method>
+
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<!-- Defunct class -->
+<class name="abstracttilecontroller">
+	
+	<attribute name="tile" value="null" />
+	<attribute name="tilevisor" value="null" />
+	
+	<method name="getTile">
+		return this.tile;
+	</method>
+	
+	<method name="setTile" args="newtile">
+		this.tile = newtile;
+	</method>
+	
+	<method name="getTileVisor">
+		return this.tilevisor
+	</method>
+	
+	<method name="setTileVisor" args="newtilevisor">
+		this.tilevisor = newtilevisor;
+		var delmap = new LzDelegate(this, "setMap", this.tilevisor, "onsetmap" );
+		var delbbox = new LzDelegate(this, "updateBBox", this.tilevisor, "onnewbbox" );
+	</method>
+	
+	<method name="setMap" args="map">
+		this.tile.setMap(map);
+	</method>
+	
+	<method name="updateBBox" args="bbox">
+		this.tile.setBBox(bbox);
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

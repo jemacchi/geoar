@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="srs/epsg4326srs.lzx" />
+
+<class name="boundingbox">
+	<attribute name="minx" value="null" />
+	<attribute name="maxx" value="null" />
+	<attribute name="miny" value="null" />
+	<attribute name="maxy" value="null" />	
+	<attribute name="srs" value="null" />
+	
+	<method name="setSrs" args="c">
+		this.srs = c;
+	</method>
+	
+	<method name="getSrs">
+		return this.srs;
+	</method>
+	
+	<method name="getMinx">
+		return this.minx;
+	</method>
+
+	<method name="getMaxx">
+		return this.maxx;
+	</method>
+
+	<method name="getMiny">
+		return this.miny;
+	</method>
+
+	<method name="getMaxy">
+		return this.maxy;
+	</method>	
+
+	<method name="setMinx" args="x">
+		this.minx = x;
+	</method>
+
+	<method name="setMaxx" args="x">
+		this.maxx = x;
+	</method>
+
+	<method name="setMiny" args="y">
+		this.miny = y;
+	</method>
+
+	<method name="setMaxy" args="y">
+		this.maxy = y;
+	</method>
+	
+	<method name="getWidth">
+		return (this.maxx -this.minx);
+	</method>
+	
+	<method name="getHeight">
+		return (this.maxy -this.miny);
+	</method>
+	
+	<method name="getConvertedWGS84BBox">
+		var bbox = new boundingbox();
+		//Debug.write("CONVERT TO WGS84... ")
+		//Debug.write(this.srs);
+		//Debug.write("CONVERTING : " + this.minx + " TO: " + this.srs.xToWGS84Long(this.minx) );
+		bbox.setMinx(this.srs.xToWGS84Long(this.minx));
+		bbox.setMaxx(this.srs.xToWGS84Long(this.maxx));
+		bbox.setMiny(this.srs.yToWGS84Lat(this.miny));
+		bbox.setMaxy(this.srs.yToWGS84Lat(this.maxy));
+		bbox.setSrs(new epsg4326srs());
+		return bbox;
+	</method>
+	
+	<method name="clone">
+		var newbbox = new boundingbox();
+		
+		newbbox.setMinx(this.minx);
+		newbbox.setMaxx(this.maxx);
+		newbbox.setMiny(this.miny);
+		newbbox.setMaxy(this.maxy);
+		newbbox.setSrs(this.srs);
+		
+		return newbbox;
+	</method>
+	
+	<method name="equals" args="bbox">
+	<![CDATA[
+		if ((this.minx == bbox.minx) && (this.maxx == bbox.maxx) && (this.miny == bbox.miny) && (this.maxy == bbox.maxy) && (this.srs.getSrsName() == bbox.srs.getSrsName()))
+			return true; else
+			return false;
+	]]>
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

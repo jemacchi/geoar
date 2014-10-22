@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="customstepslider" extends="baseslider">
+    <attribute name="stepping" value="100" type="number" />
+    
+    <myslidertrack/>
+    
+    <state apply="${classroot.showrange}">
+      <text y="${classroot.track.y + classroot.track.height + 2}"
+          text="${classroot.minvalue}" fgcolor="${classroot.style ? classroot.style.textcolor : this.fgcolor}"
+      />
+      <text y="${classroot.track.y + classroot.track.height + 2}" resize="true"
+          x="${classroot.track.x+classroot.track.width-width}"
+          text="${classroot.maxvalue}" fgcolor="${classroot.style ? classroot.style.textcolor : this.fgcolor}"
+      />
+    </state>
+    
+    <!--- @keywords private -->
+    <method name="_applystyle" args="s">
+      track.setBGColor(s.bordercolor);
+      track.background.setBGColor(s.basecolor);
+      track.filled.setBGColor(s.selectedcolor);
+    </method>
+  </class>
+  
+  <class name="myslidertrack" extends="baseslidertrack">
+    <!--- @keywords private -->
+    <attribute name="showfill" value="${parent.showfill}" type="number"/>
+    
+    <view name="background" bgcolor="red"
+        height="${parent.height-(2*parent.classroot.bordersize)}"
+        width="${parent.width-(2*parent.classroot.bordersize)}"
+        x="${ parent.classroot.bordersize }"
+        y="${ (parent.height-height)/2 }"
+    />
+    <!-- the filled area -->
+    <view name="filled" bgcolor="0xff9933" opacity=".8" visible="${classroot.showfill}"
+        height="${parent.height-(2*parent.classroot.bordersize)}"
+        width="${Math.max(0,Math.min(classroot.thumb.x+classroot.thumb.width,parent.width)-(2*parent.classroot.bordersize))}"
+        y="${ (parent.height-height)/2 }"
+        x="${ parent.classroot.bordersize }"
+    />
+    
+    <mysliderthumb name="thumb"/>
+  </class>
+  
+  <class name="mysliderthumb" extends="basesliderthumb" >
+    <attribute name="lastx" value="0" type="number" />
+    
+    <!--- @keywords private -->
+    <method name="_callShow" >
+      var msin = this._msin;
+      this._msin = true;
+      super._callShow();
+      this._msin = msin;
+    </method>
+    
+    <!--- @keywords private -->
+    <method name="_thumbFromValueEx" args="val" >
+      var slider = parent.parent;
+      var delta = slider.maxvalue-slider.minvalue;
+      var perc = (delta == 0) ? 0 : (val-slider.minvalue) / delta;
+      var pos = (slider.width - this.width) * perc;
+      return pos;
+    </method>
+    
+    <!--- @keywords private -->
+    <method name="_valueFromThumbEx" args="d" >
+      var slider = parent.parent;
+      var delta = slider.width - this.width;
+      var perc = (delta == 0) ? 0 : ( (d) / (slider.width - this.width) );
+      return Math.round( ((perc)*(slider.maxvalue-slider.minvalue)) );
+    </method>
+        
+    <!--- @keywords private -->
+    <method name="setX" args="x" >
+     <![CDATA[
+      var slider = parent.parent;
+      var steps = slider.stepping;
+      if( _valueFromThumbEx(Math.abs(this.lastx-x)) > steps ){
+        var next = x<this.lastx?_thumbFromValueEx(slider.value-steps):_thumbFromValueEx(slider.value+steps);
+        this.lastx = next;
+        super.setX( next );
+      }
+     ]]>
+    </method>
+  </class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

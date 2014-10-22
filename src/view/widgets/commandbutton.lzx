@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="abstractcommandbutton.lzx" />
+
+<class name="commandbutton" extends="abstractcommandbutton" >
+	<attribute name="buttontext" type="string" value="" />
+
+	<handler name="oninit">
+		if (this.buttontext!="")
+			this.cbutton.setAttribute("text", this.buttontext); else			
+			if (this.command)
+				this.cbutton.setAttribute("text", this.command.getCommandName());
+	</handler>
+	
+	<handler name="onbuttontext">
+		this.cbutton.setAttribute("text", this.buttontext);
+	</handler>
+	
+	<handler name="oncommand">
+		if (this.buttontext=="")
+			this.cbutton.setAttribute("text", this.command.getCommandName());
+	</handler>
+
+	<button name="cbutton" >
+		<handler name="onclick">
+			if (!classroot.command)
+				return;
+		
+			classroot.setActive(!this.active);
+		</handler>
+	</button>
+
+	<handler name="onactive">
+		if (this.active){
+			this.command.register();
+			this.onactivate.sendEvent(this);
+		} else 
+			this.command.unregister();
+	</handler>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

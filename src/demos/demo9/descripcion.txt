@@ -1,0 +1,4 @@
+Esta demo muestra un mapa como el de la demo3 pero con el seteo de canvas en 100% para ambas dimensiones con 
+el fin de poder hacer que sea una pantalla completa. Se adjuntan el SWFObject.js y el index.html que deberian
+ser deployados junto con el SWF generado en una carpeta conjunta del APACHE o WebServer (esto funcionaria en modo
+solo)

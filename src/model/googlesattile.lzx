@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="googletile.lzx" />
+
+<class name="googlesattile" extends="googletile">
+
+	<method name="getRequestQueryString">
+	<![CDATA[
+		if  (this.map == null)
+			return "";
+		
+		var query= this.map.getServerUrl();
+		
+		query += "&v=" + new String(this.map.getVersion());
+		var z = this.map.getZoom();
+		var dx = this.tx;
+		var dy = this.ty;
+		
+		var ya = 1 << (17 - z);
+		
+        if ((dy < 0) || (ya-1 < dy)) 
+                return this.map.getDefaultImageUrl();
+        
+        if ((dx < 0) || (ya-1 < dx)) {
+                dx = dx % ya;
+                if (dx < 0) 
+                        dx += ya;
+        }
+
+        var str = "t";
+        for (var i = 16 ; i >= z ; i--) {
+			ya = ya / 2;
+            if (dy < ya) {
+            	if (dx < ya) 
+                	str += 'q';
+				else {
+                	str += 'r';
+                    dx -= ya;
+                }
+			} 
+			else	{
+            	if (dx < ya) {
+                	str += 't';
+					dy -= ya;
+                } else {
+                    str +='s';
+                    dx -= ya;
+                    dy -= ya;
+                }
+			}
+		}
+		
+		query += "&t=" + str;
+		
+		//Debug.write(query);
+		return query;
+	]]>
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

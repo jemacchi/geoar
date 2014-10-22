@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="houseobjectpopup" extends="view">
+	
+	<attribute name="title" type="string" value="" />
+	<attribute name="description" type="string" value="" />
+	
+	<view name="contents" width="${parent.width}" height="${parent.height}" bgcolor="white">
+		<view name="titleview" width="${parent.width}" height="${parent.height*0.2}"  >
+			<text name="title" text="${classroot.title}" width="${parent.width}" height="${parent.height}" multiline="true" fontsize="12" />
+		</view>
+		<view name="separator" width="${parent.width*0.8}" height="1" bgcolor="black" />
+		<view name="bottomview" width="${parent.width}" height="${parent.height*0.8 - parent.separator.height}">
+			<text name="descview" width="${parent.width*0.6}" height="${parent.height}" text="${classroot.description}" multiline="true" />
+			<image name="imageview" width="${parent.width*0.4}" height="${parent.height}" src="" clip="true"/>
+			<simplelayout axis="x" />
+		</view>
+		<simplelayout axis="y"/>
+	</view>
+	
+	<handler name="onmouseover">
+		Debug.write("OVER POPUP");
+		this.bringToFront();
+	</handler>
+	
+	<method name="setTitle" args="t">
+		this.setAttribute("title", t);
+	</method>
+	
+	<method name="setDescription" args="d">
+		this.setAttribute("description", d);
+	</method>
+	
+	<method name="setImageUrl" args="url">
+		this.contents.bottomview.imageview.setAttribute("src", url);
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

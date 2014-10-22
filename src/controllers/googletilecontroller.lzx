@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="tilecontroller.lzx" />
+
+<class name="googletilecontroller" extends="tilecontroller">
+
+	<method name="setTileVisor" args="newtilevisor">
+		super.setTileVisor(newtilevisor);
+		new LzDelegate(this, "setTileX", this.tilevisor, "ontilex");
+		new LzDelegate(this, "setTileY", this.tilevisor, "ontiley");
+	</method>
+	
+	<method name="setTileX" args="t">		
+		this.tile.setTileX(t);
+	</method>
+	
+	<method name="setTileY" args="t">
+		this.tile.setTileY(t);
+	</method>
+
+</class> 
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

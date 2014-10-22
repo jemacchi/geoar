@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="map.lzx" />
+<include href="srs/mercatorsrs.lzx" />
+
+<class name="googlemap" extends="map">
+	<attribute name="zoom" type="number" value="0" />
+	<attribute name="currentbbox" value="${new boundingbox(null, {srs: new mercatorsrs()})}" />
+	<!-- El valor de zoom 16 es mas o menos igual a la representacion del bounding box completo en la representacion latlon [(-180,-90), (180,90)]. El valor de zoom maximo de google (17) es demasiado alejado-->
+	<attribute name="defaultzoom" type="number" value="16" />
+	<attribute name="zoomlevels" type="number" value="17" />
+	<!-- <attribute name="coordinateSystem" value="${new mercatorsrs()}" />  -->
+	<attribute name="v" value="8" type="number" />
+	<attribute name="defaultimage" type="string" value="./images/transparent.png" />
+	<attribute name="maporigin" value="${new Array()}" />
+	<attribute name="requested" type="boolean" value="true" />
+	
+	<method name="getDefaultImageUrl">
+		return this.defaultimage;
+	</method>
+	
+	<method name="getZoom">
+		return this.zoom;
+	</method>
+	
+	<method name="getDefaultZoom">
+		return this.defaultzoom;
+	</method>
+	
+	<method name="getVersion">
+		return this.v;
+	</method>
+	
+	<method name="getZoomLevels">
+		return this.zoomlevels;
+	</method>
+	
+	<method name="getZoomLevel" args="bbox">
+	<![CDATA[
+		var maxbbox = this.getCoordinateSystem().getMaxBBox();
+		var maxheight = maxbbox.getHeight();
+		
+		var bboxheight = bbox.getHeight();
+		var bboxwidth = bbox.getWidth();
+	
+		if (bboxheight<=bboxwidth){
+			var maxwidth = maxbbox.getWidth();
+			for (var i = this.zoomlevels; i>0;i--)
+				if (bboxwidth>maxwidth)
+					return i; else
+					maxwidth /=2;
+		} else {
+			var maxheight = maxbbox.getHeight();		
+			for (var i = this.zoomlevels; i>0;i--)
+				if (bboxheight>maxheight)
+					return i; else
+					maxheight /=2;			
+			}
+		//Maximo zoom
+		return 1;
+	]]>
+	</method>
+	
+	<method name="setCurrentBBox" args="bbox">
+	<![CDATA[
+		this.currentbbox = this.preprocessBBox(bbox);		
+		this.zoom = this.getZoomLevel(this.currentbbox);
+		this.maporigin = this.calculateMapOrigin();
+		this.onsetbbox.sendEvent();
+	]]>
+	</method>
+	
+	<method name="getMapOrigin">
+		return this.maporigin;
+	</method>
+	
+	<method name="calculateMapOrigin" >
+		var maxbbox = this.getCoordinateSystem().getMaxBBox();
+		var tilewidth = maxbbox.getWidth() / (Math.pow(2,(17-this.zoom)));
+		var tileheight = maxbbox.getHeight() / (Math.pow(2,(17-this.zoom)));
+		
+		var arr = new Array();
+		arr['x'] = parseInt(maxbbox.getMinx() / tilewidth);
+		arr['y'] = parseInt(maxbbox.getMaxy() / tileheight);		
+		//Debug.write(arr);
+		return arr;
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

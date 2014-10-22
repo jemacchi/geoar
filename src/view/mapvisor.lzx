@@ -1,0 +1,993 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="../utils/hashtable.lzx" />
+<include href="tilemanager.lzx" />
+<include href="../model/factory.lzx" />
+<include href="../model/srs/wgs84coordinate.lzx" />
+<include href="mapvisorlayer.lzx" />
+
+<class name="mapvisor" extends="view">
+	<attribute name="map" value="${this.getFactory().getNewMap()}" />
+	<!-- Estos atributos son necesarios por si se agranda el mapa sin cambiar los tiles, para que no haya inconsistencias -->
+	<attribute name="tilewidth" type="number" value="0" />
+	<attribute name="tileheight" type="number" value="0" />
+	<attribute name="bboxPxwidth" type="number" value="0" />
+	<attribute name="bboxPxheight" type="number" value="0" />
+	<!--  -->
+	<attribute name="granularity" type="number" value="0" />
+	<attribute name="surGranularity" type="number" value="0" />
+	<attribute name="defaultzoomlevel" type="number" value="1" />
+	<attribute name="visiblebbox" value="${new boundingbox()}" />
+	<attribute name="linkeable" type="boolean" value="true" />
+	<attribute name="alwaysdraggeable" type="boolean" value="false" />
+	<attribute name="implicitLoading" type="boolean" value="false"  />
+	<attribute name="refpertile" value="${new hashtable()}" />
+	<attribute name="tileman" value="${new tilemanager()}" />
+	<attribute name="reflayersshown" value="${new hashtable()}" />
+	<attribute name="firstload" type="boolean" value="false" />
+	
+	<attribute name="border" type="number" value="5" />
+	
+	<event name="onmovetoWGS84long" />
+	<event name="onmovetoWGS84lat" />
+	<event name="onchangevisorbbox" />
+	<event name="onchangerelxvisorbbox" />
+	<event name="onchangerelyvisorbbox" />
+	<event name="onmoveselectiontoWGS84long" />
+	<event name="onmoveselectiontoWGS84lat" />
+	<event name="onmoverelWGS84long" />
+	<event name="onmoverelWGS84lat" />
+	<event name="onstopdrag" />
+	<event name="onmove" />
+	<event name="onstartdrag" />
+	<event name="onstartdragselection" />
+	<event name="onstopdragselection" />
+	<event name="onmoveselection" />
+	<event name="onchangebbox" />
+	<event name="onsetmap" />
+	<event name="onreferenceview" />
+	<event name="onmousewheel" />
+	<event name="onloaded" />
+	<event name="onfirstload" />
+	
+	<attribute name="mousetrack_del" value="${new LzDelegate(this, 'notifyCurrentPosition')}" />
+	
+	<handler name="onmap">
+		this.onsetmap.sendEvent();
+	</handler>
+	
+	<!-- Esta porcion de codigo deberia estar afuera del visor-->
+	<handler name="oninit">
+		var fact = this.getFactory();
+		var mapcontroller = fact.getNewMapController();
+		mapcontroller.setMapVisor(this);
+	</handler>
+	
+	<handler name="onalwaysdraggeable">
+		//Debug.write("CHECK DRAGGEABLE: " + this.alwaysdraggeable);
+		if (this.alwaysdraggeable){
+			var delmouseup = new LzDelegate(this, "applyDrag", this, "onmousedown");
+			var delmousedown = new LzDelegate(this, "removeDrag", this, "onmouseup");
+		}
+	</handler>
+	
+	<handler name="onwidth">
+		if (!this.tilewidth)
+			this.tilewidth = this.width / this.granularity;
+	</handler>
+	
+	<handler name="onheight">
+		if (!this.tileheight)
+			this.tileheight = this.height / this.granularity;
+	</handler>
+	
+	<handler name="onmouseover">
+		//return;
+		this.mousetrack_del.enable();
+		this.mousetrack_del.register(LzIdle, "onidle");
+	</handler>
+	
+	<handler name="onmouseout">
+		//return;
+		this.mousetrack_del.unregisterAll();
+		this.mousetrack_del.disable();
+		this.contents.visibleArea.tileover = false;
+	</handler>
+	
+	<handler name="onmousewheeldelta" reference="LzKeys" args="k">
+		this.onmousewheel.sendEvent(k);
+   </handler>
+	
+	<method name="notifyBBoxChange">
+		this.adjustBoundingBox();
+	</method> 
+	
+	<method name="notifyBBoxAdjustment">
+		this.reload();
+	</method>
+
+	<method name="getMap">
+		return this.map;
+	</method>
+	
+	<method name="setMap" args="map">
+		this.setAttribute('map', map);
+		this.onmap.sendEvent();
+	</method>
+	
+	<method name="getGranularity">
+		return this.granularity;
+	</method>
+	
+	<method name="setGranularity" args="g">
+		this.granularity = g;
+	</method>
+	
+	<method name="getSurroundingGranularity">
+		return this.surGranularity;
+	</method>
+
+	<method name="setSurroundingGranularity" args="g">
+		this.surGranularity = g;
+	</method>
+	
+	<method name="getActiveLayer">
+		return this.contents.visibleArea;
+	</method>
+	
+	<method name="getCurrentBBox">
+		return this.map.getCurrentBBox();
+	</method>
+	
+	<method name="getWGS84VisibleBBox">
+		var bbox = this.visiblebbox.getConvertedWGS84BBox();
+		
+		//Debug.inspect(bbox);
+		
+		if (bbox.getMinx()>bbox.getMaxx()){
+			var swap = bbox.getMinx();
+			bbox.setMinx(bbox.getMaxx());
+			bbox.setMaxx(swap);
+		}
+		
+		if (bbox.getMiny()>bbox.getMaxy()){
+			var swap = bbox.getMiny();
+			bbox.setMiny(bbox.getMaxy());
+			bbox.setMaxy(swap);
+		}
+		
+		return bbox;
+	</method>
+	
+	<method name="getVisibleBBox">
+		return this.visiblebbox;
+	</method>
+	
+	<method name="getDefaultBBox">
+		return this.map.getDefaultBBox();
+	</method>
+	
+	<method name="changeBBox" args="bbox">
+		this.onchangebbox.sendEvent(bbox);
+	</method>
+	
+	<method name="getTileManager">
+		return this.tileman;
+	</method>
+	
+	<method name="setTileManager" args="m">
+		this.tileman = m;
+	</method>
+	
+	<method name="getFactory">
+		return new factory();
+	</method>
+
+	<method name="isLinkeable">
+		return this.linkeable;
+	</method>
+	
+	<method name="setLinkeable" args="l">
+		this.linkeable = l;
+	</method>
+	
+	<method name="hasImplicitMapLoading">
+		return this.implicitLoading;
+	</method>
+	
+	<method name="setImplicitMapLoading" args="l">
+		this.implicitLoading = l;
+	</method>
+	
+	<method name="getXCoordsPerPixel">
+		var bbox = this.map.getCurrentBBox();
+		return bbox.getWidth() / this.bboxPxwidth;
+	</method>
+	
+	<method name="getPixelsPerXCoord">
+		var bbox = this.map.getCurrentBBox();
+		return this.bboxPxwidth/bbox.getWidth() ;
+	</method>
+	
+	<method name="getYCoordsPerPixel">
+		var bbox = this.map.getCurrentBBox();
+		return bbox.getHeight()/this.bboxPxheight ;
+	</method>
+	
+	<method name="getPixelsPerYCoord">
+		var bbox = this.map.getCurrentBBox();		
+		return this.bboxPxheight /bbox.getHeight();
+	</method>
+	
+	<method name="transformPxArea" args="area">
+		var newbbox = new boundingbox();
+		
+		//Debug.inspect(area);
+		
+		newbbox.setMinx(this.translatePxToXCoord(area.getMinx()));
+		newbbox.setMaxx(this.translatePxToXCoord(area.getMaxx()));
+		newbbox.setMiny(this.translatePxToYCoord(area.getMaxy()));
+		newbbox.setMaxy(this.translatePxToYCoord(area.getMiny()));
+		
+		newbbox.setSrs(this.map.getCoordinateSystem());
+		
+		//Debug.write("MINX: " + this.map.coordinateSystem.xToWGS84Long(newbbox.minx) );
+		//Debug.write("MAXX: " + this.map.coordinateSystem.xToWGS84Long(newbbox.maxx) );
+		//Debug.write("MINY: " + this.map.coordinateSystem.yToWGS84Lat(newbbox.miny) );
+		//Debug.write("MAXY: " + this.map.coordinateSystem.yToWGS84Lat(newbbox.maxy) );
+		
+		//Debug.inspect(newbbox);
+		
+		return newbbox;
+	</method>
+	
+	<method name="getTileWidth">
+	<![CDATA[
+		var cbbox = this.map.getCurrentBBox();
+		
+		return cbbox.getWidth()/this.getGranularity();
+	]]>
+	</method>
+	
+	<method name="getTileHeight">
+	<![CDATA[
+		var cbbox = this.map.getCurrentBBox();
+		
+		return cbbox.getHeight()/this.getGranularity();
+	]]>	
+	</method>
+	
+	<method name="getTileWidthPx">
+		return this.tilewidth;
+	</method>
+	
+	<method name="getTileHeightPx">
+		return this.tileheight;
+	</method>
+	
+	<method name="translatePxToWGS84Long" args="x">
+		var srs = map.getCoordinateSystem();
+		return srs.xToWGS84Long(this.translatePxToXCoord(x));
+	</method>
+
+	<method name="translatePxToWGS84Lat" args="py">
+	<![CDATA[
+		var srs = map.getCoordinateSystem();
+		return srs.yToWGS84Lat(this.translatePxToYCoord(py));
+	]]>
+	</method>
+	
+	<method name="translateWGS84LongToPx" args="x">
+	<![CDATA[
+		var srs = this.map.getCoordinateSystem();
+		var minx = this.map.getCurrentBBox().getMinx();
+		//Debug.write("DIFF: " + (srs.WGS84LongToX(x) - minx));
+		
+		return (srs.WGS84LongToX(x) - minx) * this.getPixelsPerXCoord();
+	]]>	
+	</method>
+	
+	<method name="translateWGS84LatToPx" args="y">
+	<![CDATA[
+		var srs = this.map.getCoordinateSystem();
+		var maxy = this.map.getCurrentBBox().getMaxy();
+		var yc = maxy - srs.WGS84LatToY(y); 
+		
+		return (yc) * this.getPixelsPerYCoord();
+		
+		if (yc < this.map.maxbbox.miny)
+			return (this.map.maxbbox.miny - yc) * this.getPixelsPerYCoord();
+			
+		if (yc > this.map.maxbbox.maxy)
+			return 	(this.map.maxbbox.maxy - yc) * this.getPixelsPerYCoord();
+		
+		return (yc) * this.getPixelsPerYCoord();
+	]]>
+	</method>
+	
+	<method name="translatePxToXCoord" args="px">
+	<![CDATA[
+		var minx = this.map.getCurrentBBox().getMinx();
+		var mapminx = this.map.getMaxBBox().getMinx();
+		var mapmaxx = this.map.getMaxBBox().getMaxx();
+		var xc = minx + (px * this.getXCoordsPerPixel());
+		
+		return xc;
+		
+		Debug.write(px);
+		Debug.write(minx);
+		Debug.write("XC: " + xc);
+		//Debug.write("MAXBBOX MINX: " + mapminx);
+
+		if (xc < mapminx)
+			return mapminx;
+			
+		//Debug.write("MAXBBOX MAXX: " + mapmaxx);	
+			
+		if (xc > mapmaxx)
+			return mapmaxx;
+			
+		return xc;
+	]]>	
+	</method>
+	
+	<method name="translatePxToYCoord" args="py">
+	<![CDATA[
+		var maxy = this.map.getCurrentBBox().getMaxy();
+		var mapminy = this.map.getMaxBBox().getMiny();
+		var mapmaxy = this.map.getMaxBBox().getMaxy();		
+		var yc = maxy - py * this.getYCoordsPerPixel();
+		
+		return yc;
+		
+		if (yc < mapminy)
+			return mapminy;
+			
+		if (yc > mapmaxy)
+			return mapmaxy;
+		
+		return yc;
+	]]>	
+	</method>
+	
+	<method name="translateXCoordToPx" args="xc">
+	<![CDATA[
+		var minx = this.map.getCurrentBBox().getMinx();
+		return (xc - minx) * this.getPixelsPerXCoord();
+	]]>
+	</method>
+	
+	<method name="translateYCoordToPx" args="yc">
+	<![CDATA[
+		var maxy = this.map.getCurrentBBox().getMaxy();
+		return (maxy - yc) * this.getPixelsPerYCoord();	
+	]]>
+	</method>
+	
+	<method name="getTileXIndex" args="px">
+	<![CDATA[
+		var _refx = px/this.tilewidth;
+		
+		if (_refx<0)
+			_refx--;
+		
+		var refx = parseInt(_refx);
+		
+		//Debug.write("PX: " + px + " REFX:  " + refx );
+		//Debug.write(px/this.tilewidth);
+
+		return refx;
+	]]>
+	</method>
+
+	<method name="getTileYIndex" args="py">
+	<![CDATA[
+		var _refy = py/this.tileheight
+		
+		if (_refy< 0)
+			_refy --;
+	
+		var refy = parseInt(_refy);
+		//Debug.write("TILEHEIGHT: " + this.tileheight);
+		//Debug.write("PY: " + py + " REFY:  " + refy );
+		//Debug.write(py/this.tileheight);
+		
+		return refy;
+	]]>
+	</method>
+	
+	<method name="notifyCurrentPosition">
+		this.onpos.sendEvent(this.getCurrentWGS84Position());
+	</method>
+	
+	<method name="getCurrentWGS84Position">
+		var pos = new wgs84coordinate();
+		var bbox = this.map.getCurrentBBox();
+		var srs = this.map.getCoordinateSystem();
+		
+		if (srs==null)
+			return;
+		
+		pos.setXCoord(this.translatePxToWGS84Long(this.getActiveLayer().getMouse('x')));
+		pos.setYCoord(this.translatePxToWGS84Lat(this.getActiveLayer().getMouse('y')));
+		
+		//pos['x'] = this.getActiveLayer().getMouse('x');
+		//pos['y'] = this.getActiveLayer().getMouse('y');
+		
+		/*
+		Debug.write("CURRENT Y: " + this.contents.visibleArea.y);
+		Debug.write("MOUSE Y: " + this.contents.visibleArea.getMouse('y'));
+		Debug.write("CURRENT X: " + this.contents.visibleArea.x);
+		Debug.write("MOUSE X: " +this.contents.visibleArea.getMouse('x'));
+		*/		
+		
+		return pos;	
+	</method>
+	
+	<method name="getCurrentX">
+		// Se invierte para mantener coherencia con la x del mouse
+		return -this.getActiveLayer().x;
+	</method>
+
+	<method name="getCurrentY">
+		// Se invierte para mantener coherencia con la y del mouse
+		return -this.getActiveLayer().y;
+	</method>
+	
+	<method name="centerOnWGS84Coord" args="coord">
+		Debug.write("CENTERING ...");
+		var bbox = getWGS84VisibleBBox();
+		var tw = bbox.getWidth();
+		var th = bbox.getHeight();
+		this.moveToWGS84Long(coord.getXCoord() - (tw/2));
+		this.moveToWGS84Lat(coord.getYCoord() + (th/2));
+		this.drawArea();
+	</method>
+	
+	<method name="flagCoordenate" args="coord">
+		
+	</method>
+	
+	<method name="moveToWGS84Long" args="long">
+		//Debug.write("MOVING TO X: " + long);
+		//var oldx = layer.x;
+		
+		this.getActiveLayer().setAttribute("x", -this.translateWGS84LongToPx(long));
+		//var newx = layer.x;
+		//Debug.write("OLDX: " + oldy);
+		//Debug.write("NEWX: " + newy);
+		//layer.moveRelxPxSelectedArea(oldx - newx);
+	</method>
+	
+	<method name="moveToWGS84Lat" args="lat">
+		//Debug.write("MOVING TO Y: " + lat);
+		
+		//var oldy = layer.y;
+		this.getActiveLayer().setAttribute("y", -this.translateWGS84LatToPx(lat));
+		//var newy = layer.y
+		
+		//Debug.write("OLDY: " + oldy);
+		//Debug.write("NEWY: " + newy);
+		//layer.moveRelyPxSelectedArea(oldy - newy);	
+	</method>
+	
+	<method name="moveRelWGS84Long" args="relx">
+	<![CDATA[
+		//Debug.write(this.getAttribute("name"));
+		var layer = this.getActiveLayer();
+		var bbox = this.getVisibleBBox();
+		var srs = bbox.getSrs();
+		
+		//Debug.inspect(bbox);
+		//Debug.write("RELX: " + relx);
+		//Debug.write("OLDX: " + bbox.getMinx());
+		var minx = srs.WGS84LongToX(srs.xToWGS84Long(bbox.getMinx())+relx);
+		//Debug.write("NEWX: " + minx);
+		
+		var oldx = layer.x;
+		layer.setX(-this.translateXCoordToPx(minx));
+		var newx = layer.x;
+				
+		//Mueve el area seleccionada, de existir
+		layer.moveRelxPxSelectedArea(oldx - newx);
+		
+		//this.getActiveLayer().moveRelxPxSelectedArea(-(this.getPixelsPerXCoord()*relx));
+	]]>
+	</method>
+	
+	<method name="moveRelWGS84Lat" args="rely">
+	<![CDATA[
+		//Debug.write("MOVING RELATIVE Y PARENT ");
+		//Debug.write("Y: " + rely);
+		var layer = this.getActiveLayer();
+		var bbox = this.getVisibleBBox();
+		var srs = bbox.getSrs();
+		
+		var maxy = srs.WGS84LatToY(srs.yToWGS84Lat(bbox.getMaxy())+rely);
+		
+		var oldy = layer.y;
+		layer.setY(-this.translateYCoordToPx(maxy));
+		var newy = layer.y;
+				
+		//Mueve el area seleccionada, de existir
+		layer.moveRelyPxSelectedArea(oldy - newy);
+		
+		//this.getActiveLayer().moveRelyPxSelectedArea((this.bboxPxheight/bbox.getHeight())*rely);		
+	]]>
+	</method>
+	
+	<method name="adjustBoundingBox">
+	<![CDATA[
+		
+		var cbbox = this.map.getCurrentBBox();
+		
+		var cbboxwidth = cbbox.getWidth();
+		var cbboxheight = cbbox.getHeight();
+		var imratio;		
+		
+		var newheight = cbboxheight;
+		var newwidth = cbboxwidth;
+		
+		Debug.write("HEIGHT: " + this.height);
+		Debug.write("BBOX HEIGHT: " + cbboxheight);
+		Debug.write("WIDTH: " + this.width);
+		Debug.write("BBOX WIDTH: " + cbboxwidth);
+		
+		if (this.height>this.width){
+			imratio = this.width/this.height;
+			if (cbboxheight>cbboxwidth)
+				newwidth = (cbboxheight*imratio); else
+				if ((imratio==1) || (cbboxwidth == cbboxheight))
+					newwidth = cbboxheight; else
+					newwidth =  (cbboxheight*(1-imratio));
+		}	else {
+			imratio = this.height/this.width;
+			if (cbboxwidth>cbboxheight)
+				newheight = (cbboxwidth*imratio); else
+				if ((imratio==1) || (cbboxwidth == cbboxheight))
+					newheight= cbboxwidth; else
+					newheight = (cbboxwidth*(1-imratio));
+		}
+		
+		var adjbbox = new boundingbox();
+		
+		adjbbox.setMinx(cbbox.getMinx());
+		adjbbox.setMiny(cbbox.getMaxy() - newheight);
+		adjbbox.setMaxx(cbbox.getMinx() + newwidth);
+		adjbbox.setMaxy(cbbox.getMaxy());
+		adjbbox.setSrs(this.map.getCoordinateSystem());
+		
+		if (this.defaultzoomlevel > 1)
+			adjbbox =this.zoomInBBox(this.defaultzoomlevel, adjbbox);
+		 
+		if (this.defaultzoomlevel < -1)
+			adjbbox = this.zoomOutBBox(-this.defaultzoomlevel, adjbbox);
+
+		this.onadjustbbox.sendEvent(adjbbox);
+	]]>
+	</method>	
+ 
+	<method name="clear">
+		this.getActiveLayer().clear();
+	</method>
+	
+	<method name="initializeLoading">
+		Debug.write("VISIBLE BBOX");
+		Debug.write(visiblebbox);
+		this.bboxPxwidth = this.width;
+		this.bboxPxheight = this.height;
+		this.tilewidth = this.bboxPxwidth / this.getGranularity();
+		this.tileheight = this.bboxPxheight / this.getGranularity();	
+		//this.mousetrack_del.unregisterAll();
+		//this.mousetrack_del.disable();
+		this.contents.visibleArea.tileover = false;
+		this.applyMovementConstraints();
+	</method>
+	
+	<method name="calculateVisibleBBox">
+		var layer= this.getActiveLayer();
+		this.getActiveLayer().clear();
+		this.setX(0);
+		this.setY(0);
+		var bbox = this.map.getCurrentBBox();
+
+		//Debug.inspect(bbox);
+		this.visiblebbox.minx = this.translatePxToXCoord(-layer.x);
+		this.visiblebbox.maxx = this.translatePxToXCoord(-layer.x+ this.width);
+		this.visiblebbox.maxy = this.translatePxToYCoord(-layer.y);
+		this.visiblebbox.miny = this.translatePxToYCoord(-layer.y+ this.height);
+		
+		//Debug.inspect(this.visiblebbox);
+
+		this.visiblebbox.setSrs(bbox.getSrs());		
+
+		if (this.isLinkeable())
+			this.onchangevisorbbox.sendEvent(this.visiblebbox);
+	</method>
+
+	<method name="reload">
+	<![CDATA[		
+		if (!this.map.isLoaded()){
+			LzTimer.addTimer(new LzDelegate(this, "reload"), 100);
+			return;
+		}
+		
+		this.initializeLoading();
+		this.calculateVisibleBBox();
+		Debug.write("RELOADING");
+		this.populateReferences();		
+		this.drawArea();		
+		this.getActiveLayer().showSelectionBox();
+		this.onloaded.sendEvent();
+		
+		if (!this.firstload){
+			this.firstload = true;
+			this.onfirstload.sendEvent();
+		}		
+	]]>
+	</method>
+	
+	<method name="applyMovementConstraints">
+	<![CDATA[
+		var minx = -this.translateXCoordToPx(this.map.getMaxBBox().getMinx())
+		var maxx = -this.translateXCoordToPx(this.map.getMaxBBox().getMaxx())
+		var miny = -this.translateYCoordToPx(this.map.getMaxBBox().getMaxy())
+		var maxy = -this.translateYCoordToPx(this.map.getMaxBBox().getMiny())
+		
+		Debug.write("DRAG MINX: " + minx);
+		Debug.write("DRAG MAXX: " + maxx);
+		Debug.write("DRAG MINY: " + miny);
+		Debug.write("DRAG MAXY: " + maxy);
+		
+		this.getActiveLayer().applyDragConstraints(maxx, minx , maxy, miny);
+	]]>
+	</method>
+	
+	<method name="refresh">
+	<![CDATA[	
+		if (this.isLinkeable())
+			this.onchangevisorbbox.sendEvent(this.visiblebbox);
+
+		this.getActiveLayer().refresh();
+	]]>
+	</method>
+
+	<method name="drawArea">
+		//Debug.write("DRAWING...");
+		this.getActiveLayer().drawLayer();
+	</method>	
+	
+	<method name="applyDrag">
+		this.getActiveLayer().applyDrag();
+	</method>
+	
+	<method name="removeDrag">
+		this.getActiveLayer().removeDrag();
+	</method>
+	
+	<method name="startSelection">
+		this.activateSelectionBox();
+		this.getActiveLayer().setSelectionInitialParams();
+	</method>
+	
+	<method name="stopSelection">		
+		this.getActiveLayer().boxSelected();
+		this.deactivateSelectionBox();
+	</method>
+	
+	<method name="activateSelectionBox">
+		this.getActiveLayer().activateSelectionBox();		
+	</method>
+	
+	<method name="deactivateSelectionBox">		
+		this.getActiveLayer().deactivateSelectionBox();
+	</method>
+	
+	<method name="highlightWGS84Area" args="bbox">
+		var minx = this.translateWGS84LongToPx(bbox.getMinx());
+		var miny = this.translateWGS84LatToPx(bbox.getMiny());
+		var maxx = this.translateWGS84LongToPx(bbox.getMaxx());
+		var maxy = this.translateWGS84LatToPx(bbox.getMaxy());
+		
+		Debug.write("MINX " + bbox.minx + " TO " + minx);
+		Debug.write("MAXX: " + bbox.maxx + " TO: " + maxx);
+		Debug.write("MINY: " + bbox.getMiny() + " TO: " + miny);
+		Debug.write("MAXY: " + bbox.getMaxy() + " TO: " + maxy);
+					
+		this.activateSelectionBox();
+		this.getActiveLayer().setSelectionDraggeable(true);
+		this.getActiveLayer().setSelectionCustomParams(minx, maxy, maxx -minx, miny-maxy);
+	</method>
+	
+	<method name="highlightArea" args="bbox">
+		Debug.write("HIGHLIGHTING AREA");
+		this.highlightWGS84Area(bbox.getConvertedWGS84BBox());
+	</method>
+	
+	<method name="moveHighlightedAreaToWGS84Long" args="xcoord">
+		//Debug.write("MOVING SELECTED AREA TO X: " + xcoord);
+		this.getActiveLayer().moveSelectedAreaToX(this.translateWGS84LongToPx(xcoord));
+	</method>
+	
+	<method name="moveHighlightedAreaToWGS84Lat" args="ycoord">
+		//Debug.write("MOVING SELECTED AREA TO Y: " + ycoord);
+		this.getActiveLayer().moveSelectedAreaToY(this.translateWGS84LatToPx(ycoord));	
+	</method>
+	
+	<method name="zoomInBBox" args="level, bbox">
+	<![CDATA[
+		//Un nivel de zoom in menor a 0 no se puede hacer, 1 es el mismo zoom (no vale la pena hacer zoom)
+		if ((level <= 0) || (level==1))
+			return bbox;
+			
+		var currminx = bbox.getMinx();
+		var currmaxx = bbox.getMaxx();
+		var currmaxy = bbox.getMaxy();
+		var currminy = bbox.getMiny();
+		
+		var centerx = currminx + (currmaxx - currminx)/2;
+		var centery = currminy + (currmaxy - currminy)/2;
+		
+		var zoomamountx = (centerx  - currminx)/level;
+		var zoomamounty = (centery - currminy)/level;
+		
+		var newbbox = new boundingbox(null);
+		newbbox.setMinx(centerx - zoomamountx);
+		newbbox.setMaxx(centerx + zoomamountx);
+		newbbox.setMiny(centery - zoomamounty);
+		newbbox.setMaxy(centery + zoomamounty);
+		newbbox.setSrs(this.map.getCoordinateSystem());
+		
+		return newbbox;		
+	]]>
+	</method>
+	
+	<method name="zoomOutBBox" args="level, bbox">
+	<![CDATA[
+		//Un nivel de zoom out menor a 0 no se puede hacer, 1 es el mismo zoom (no vale la pena hacer zoom)
+		if ((level <= 0) || (level==1))
+			return bbox;
+		
+		var currminx = bbox.getMinx();
+		var currmaxx = bbox.getMaxx();
+		var currmaxy = bbox.getMaxy();
+		var currminy = bbox.getMiny();
+		
+		var centerx = currminx + (currmaxx - currminx)/2;
+		var centery = currminy + (currmaxy - currminy)/2;
+		
+		var zoomamountx = (centerx  - currminx)*level;
+		var zoomamounty = (centery - currminy)*level;
+		
+		var newbbox = new boundingbox(null);
+		
+		newbbox.setMinx(centerx - zoomamountx);
+		newbbox.setMaxx(centerx + zoomamountx);
+		newbbox.setMiny(centery - zoomamounty);
+		newbbox.setMaxy(centery + zoomamounty);
+		newbbox.setSrs(this.map.getCoordinateSystem());
+		
+		return newbbox;
+	]]>
+	</method>
+	
+	<method name="zoomInArea" args="level">
+	<![CDATA[
+		Debug.write("ZOOM IN LEVEL: " + level);
+		//Un nivel de zoom in menor a 0 no se puede hacer, 1 es el mismo zoom (no vale la pena hacer zoom)
+		if ((level <= 0) || (level==1))
+			return;
+			
+		var bbox = this.map.getCurrentBBox();
+				
+		var currminx = this.getActiveLayer().getCurrentMinXCoord();
+		var currmaxx = this.getActiveLayer().getCurrentMaxXCoord();
+		var currmaxy = this.getActiveLayer().getCurrentMaxYCoord();
+		var currminy = this.getActiveLayer().getCurrentMinYCoord();
+		
+		/*
+		Debug.write("MIN X: " + (-this.contents.visibleArea.x) + " --> " + currminx );
+		Debug.write("MAX X: " + (-this.contents.visibleArea.x + this.width) + " --> " + currmaxx);
+		Debug.write("MIN Y: " + (-this.contents.visibleArea.y + this.height) + " --> " + currminy);
+		Debug.write("MAX Y: " + (-this.contents.visibleArea.y) + " --> " + currmaxy);		
+		*/
+		
+		var centerx = currminx + (currmaxx - currminx)/2;
+		var centery = currminy + (currmaxy - currminy)/2;
+		
+		Debug.write("CENTER X: " + centerx);
+		Debug.write("CENTER Y: " + centery);
+		
+		var zoomamountx = (centerx  - currminx)/level;
+		var zoomamounty = (centery - currminy)/level;
+		
+		Debug.write("AMOUNT X: " + zoomamountx);
+		Debug.write("AMOUNT Y: " + zoomamounty);
+		
+		var newbbox = new boundingbox(null);
+		newbbox.setMinx(centerx - zoomamountx);
+		newbbox.setMaxx(centerx + zoomamountx);
+		newbbox.setMiny(centery - zoomamounty);
+		newbbox.setMaxy(centery + zoomamounty);
+		newbbox.setSrs(this.map.getCoordinateSystem());
+		
+		//Debug.write(bbox);
+		//Debug.write(newbbox);
+		this.changeBBox(newbbox);
+	]]>
+	</method>
+	
+	<method name="zoomOutArea" args="level">
+	<![CDATA[
+		Debug.write("ZOOM OUT LEVEL: " + level);
+		//Un nivel de zoom out menor a 0 no se puede hacer, 1 es el mismo zoom (no vale la pena hacer zoom)
+		if ((level <= 0) || (level==1))
+			return;
+				
+		var bbox = this.map.getCurrentBBox();
+		
+		var currminx = this.getActiveLayer().getCurrentMinXCoord();
+		var currmaxx = this.getActiveLayer().getCurrentMaxXCoord();
+		var currmaxy = this.getActiveLayer().getCurrentMaxYCoord();
+		var currminy = this.getActiveLayer().getCurrentMinYCoord();
+		
+		var centerx = currminx + (currmaxx - currminx)/2;
+		var centery = currminy + (currmaxy - currminy)/2;
+		
+		var zoomamountx = (centerx  - currminx)*level;
+		var zoomamounty = (centery - currminy)*level;
+		
+		var newbbox = new boundingbox(null);
+		
+		newbbox.setMinx(centerx - zoomamountx);
+		newbbox.setMaxx(centerx + zoomamountx);
+		newbbox.setMiny(centery - zoomamounty);
+		newbbox.setMaxy(centery + zoomamounty);
+		newbbox.setSrs(this.map.getCoordinateSystem());
+		
+		//Debug.write(bbox);
+		//Debug.inspect(newbbox);
+		this.changeBBox(newbbox);
+	]]>
+	</method>
+	
+	<method name="zoomInToArea" args="bbox">
+	<![CDATA[
+		//Debug.inspect(newbbox);
+		//Debug.inspect(this.map.getCurrentBBox());
+		this.changeBBox(this.transformPxArea(bbox));
+	]]>
+	</method>
+		
+	<method name="zoomOutFromArea" args="bbox, level">
+	<![CDATA[
+		Debug.write("ZOOM OUT LEVEL: " + level);
+		//Un nivel de zoom out menor a 0 no se puede hacer, 1 es el mismo zoom (no vale la pena hacer zoom)
+		if ((level <= 0) || (level==1))
+			return;
+
+		var bboxwidth = this.map.getCurrentBBox().getWidth();
+		var bboxheight = this.map.getCurrentBBox().getHeight();
+		
+		bbox = this.transformPxArea(bbox);
+			
+		var currminx = bbox.getMinx();
+		var currmaxx = bbox.getMaxx();
+		var currmaxy = bbox.getMaxy();
+		var currminy = bbox.getMiny();
+		
+		var centerx = currminx + (currmaxx - currminx)/2;
+		var centery = currminy + (currmaxy - currminy)/2;
+		
+		var zoomamountx = bboxwidth*level;
+		var zoomamounty = bboxheight*level;
+		
+		var newbbox = new boundingbox(null);
+		
+		newbbox.setMinx(centerx - zoomamountx);
+		newbbox.setMaxx(centerx + zoomamountx);
+		newbbox.setMiny(centery - zoomamounty);
+		newbbox.setMaxy(centery + zoomamounty);
+		newbbox.setSrs(this.map.getCoordinateSystem());
+		
+		this.changeBBox(newbbox);
+	]]>
+	</method>	
+	
+	<method name="selectReferences" args="area">
+		this.getActiveLayer().selectReferences(area);
+	</method>
+	
+	<method name="clearReferences">
+		this.getActiveLayer().clearSelection();
+	</method>
+	
+	<method name="setTilesOpacity" args="op">
+		this.getActiveLayer().setOpacity(op);
+	</method>
+	
+	<method name="addTileReferences" args="refs, tiley, tilex">
+		var tilekey = new String(tiley) + new String(tilex);
+		this.refpertile.put(tilekey, refs);
+		
+		var dt = l.drawntiles.get(tilekey);
+
+		if (dt)
+			for (var i in refs)
+				dt.getTile().addReference(refs[i]);
+	</method>
+	
+	<method name="populateReferences">
+	<![CDATA[	
+		Debug.write("POPULATING REFERENCES");
+		var layer = this.map.getActiveReferenceLayer();
+		
+		if (!layer)
+			return;
+		
+		/*
+		if (this.reflayersshown.get(layer.getLayerName()))
+			return;
+				
+		this.reflayersshown.put(layer.getLayerName(), layer);
+		*/	
+		
+		this.refpertile.clear();
+		var refs = layer.getReferences();			
+		
+		for (var i=0; i<refs.length; i++){
+			//Debug.write("TRANSLATION Y : " + this.translateYCoordToPx(refs[i].getPointY()));
+			
+			var refx = this.getTileXIndex(this.translateXCoordToPx(refs[i].getPointX()));
+			var refy = this.getTileYIndex(this.translateYCoordToPx(refs[i].getPointY()));
+			
+			//Debug.write("REFX: " + refx + " REFY: " + refy);
+			
+			var tilekey = new String(refy) + new String(refx);
+	
+			if (this.refpertile.containsKey(tilekey)){
+				var arr = this.refpertile.get(tilekey);
+				arr.push(refs[i]);
+			} else {
+				var arr = new Array(refs[i]);
+				this.refpertile.put(tilekey, arr);
+			}
+			
+			var l = this.getActiveLayer();
+			var dt = l.drawntiles.get(tilekey);
+
+			if (dt)
+				dt.getTile().addReference(refs[i]);
+		}
+		
+		//Debug.write(refs);
+	]]>
+	</method>
+	
+	<method name="getTileReferences" args="tilekey">
+		return this.refpertile.get(tilekey);
+	</method>
+	
+	<!-- La vista no puede ocupar todo el espacio, o de otra manera no se detectaria el evento onmouseout de la clase, se resta la minima cantidad -->
+	<view name="contents" x="1" y="1" width="${classroot.width -2}" height="${classroot.height -2}" clip="true" bgcolor="#5381CE" >
+		<mapvisorlayer name="visibleArea" mapvisor="${classroot}" width="${parent.width - classroot.border}" height="${parent.height - classroot.border}">
+		</mapvisorlayer>
+	</view>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="boundingbox.lzx" />
+
+<class name="abstracttile">
+	<attribute name="map" value="null" />
+	<attribute name="bbox" value="null" />
+	<attribute name="outofbounds" type="boolean" value="false" />
+	<event name="onsetbbox" />
+	<event name="onmapchange" />
+	<event name="onlayerschange" />
+
+	<dataset name="tilereq" type="http" />
+	
+	<method name="doRequest">
+	</method>
+	
+	<method name="getRequestQueryString">
+	</method>
+	
+	<method name="isOutOfBounds">
+		return this.outofbounds;
+	</method>
+	
+	<method name="getBBox">
+		return this.bbox;
+	</method>	
+	
+	<method name="setBBox" args="newbbox">
+	<![CDATA[
+		var mapminx = this.map.getMaxBBox().getMinx();
+		var mapmaxx = this.map.getMaxBBox().getMaxx();
+		var mapminy = this.map.getMaxBBox().getMiny();
+		var mapmaxy = this.map.getMaxBBox().getMaxy();
+		//Debug.write("NEW TILE");
+		//Debug.write(this.map.getMaxBBox());
+		//Debug.inspect(newbbox);
+		
+		if (newbbox.maxx <= mapminx )
+			this.outofbounds = true;
+		
+		//Debug.write("CHECKING BOUNDS...");
+		//Debug.write(newbbox.minx);
+		//Debug.write(mapmaxx);
+		
+		if (newbbox.minx >= mapmaxx )
+			this.outofbounds = true;
+				
+		if (newbbox.maxy <= mapminy )
+			this.outofbounds = true;
+				
+		if (newbbox.miny >= mapmaxy )
+			this.outofbounds = true;
+
+		//Debug.write("OUT OF BOUNDS: " + this.outofbounds);
+		this.bbox = newbbox;
+		this.onsetbbox.sendEvent();
+	]]>
+	</method>
+	
+	<method name="getMap">
+		return this.map;
+	</method>
+	
+	<method name="setMap" args="newmap">
+		this.map = newmap;
+		this.onmapchange.sendEvent();
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

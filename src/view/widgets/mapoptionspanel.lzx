@@ -1,0 +1,180 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="textlistitemadapter.lzx" />
+
+<class name="mapoptionspanel" >
+	<attribute name="visor" value="null" />
+	<attribute name="fact" value="null" />
+	<attribute name="newbbox" value="${new boundingbox()}" />
+	<attribute name="servers" value="${new hashtable()}" />
+	
+	<event name="onupdateservers" />
+	<event name="onupdatebbox" />
+	
+	<handler name="onvisor">
+	<![CDATA[
+		var supservers = this.visor.getMap().getSupportedServers().toArray();
+		var selservers = this.visor.getMap().getServers();
+		
+		var lst = this.getList();
+		Debug.write(lst);
+		
+		for (var i = 0; i < supservers.length; i++){
+			var item = new textlistitem(lst, {text:supservers[i].getServerName(), value: supservers[i] })
+			new LzDelegate(this, "selectServer", item, "onselected");
+			if (selservers.contains(supservers[i].getServerName()))
+				item.setSelected(true);
+		}
+		
+		var vbbox = this.visor.getVisibleBBox();
+		
+		this.contents.panelview.bboxview.visiblebboxview.minlongview.minlong.setText(vbbox.getMinx());
+		this.contents.panelview.bboxview.visiblebboxview.maxlongview.maxlong.setText(vbbox.getMaxx());
+		this.contents.panelview.bboxview.visiblebboxview.minlatview.minlat.setText(vbbox.getMiny());
+		this.contents.panelview.bboxview.visiblebboxview.maxlatview.maxlat.setText(vbbox.getMaxy());
+		this.contents.panelview.bboxview.visiblebboxview.srsview.srstext.setText(vbbox.getSrs().getSrsName());
+		
+		var bbox = this.visor.getMap().getCurrentBBox();
+		
+		this.contents.panelview.bboxview.originalbboxview.minlongview.minlong.setText(vbbox.getMinx());
+		this.contents.panelview.bboxview.originalbboxview.maxlongview.maxlong.setText(vbbox.getMaxx());
+		this.contents.panelview.bboxview.originalbboxview.minlatview.minlat.setText(vbbox.getMiny());
+		this.contents.panelview.bboxview.originalbboxview.maxlatview.maxlat.setText(vbbox.getMaxy());
+		this.contents.panelview.bboxview.originalbboxview.srsview.srstext.setText(vbbox.getSrs().getSrsName());
+		
+		this.newbbox = bbox.clone();
+	]]>
+	</handler>
+	
+	<method name="selectServer" args="s">
+	
+		Debug.write(s.getAttribute("text"));
+		Debug.write(s.selected);
+		Debug.write(this.servers.contains(s.getAttribute("text")));
+		Debug.write(this.servers);
+	
+		if (s.selected)
+			this.servers.put(s.getAttribute("text"), s.getValue()); else
+				if (this.servers.contains(s.getAttribute("text"))){
+					Debug.write("REMOVING");
+					this.servers.remove(s.getAttribute("text"));
+					}
+
+	</method>
+	
+	<method name="apply">
+		this.onupdateservers.sendEvent(this.servers);
+		this.newbbox.setMinx(parseFloat(this.contents.panelview.bboxview.originalbboxview.minlongview.minlong.getAttribute("text")));
+		this.newbbox.setMaxx(parseFloat(this.contents.panelview.bboxview.originalbboxview.maxlongview.maxlong.getAttribute("text")));
+		this.newbbox.setMiny(parseFloat(this.contents.panelview.bboxview.originalbboxview.minlatview.minlat.getAttribute("text")));
+		this.newbbox.setMaxy(parseFloat(this.contents.panelview.bboxview.originalbboxview.maxlatview.maxlat.getAttribute("text")));
+	
+		this.onupdatebbox.sendEvent(this.newbbox);
+	</method>
+	
+	<method name="setFactory" args="f">
+		this.fact = f;
+	</method>
+	
+	<method name="setMapVisor" args="m">
+		this.setAttribute("visor", m);
+	</method>
+	
+	<method name="getList">
+		return this.contents.panelview.serverlist;
+	</method>
+	
+	<view name="contents" width="${parent.width*0.98 - this.vscroll.width}" height="${parent.height*0.9 - this.hscroll.height}" clip="true" oninit="this.bringToFront()" >
+		<view name="panelview" width="${parent.width}">
+			<text name="servertext" text="Selected Servers: " />
+			<list name="serverlist" width="${parent.width*0.8}" autoscrollbar="true" shownitems="6" multiselect="true" toggleselected="true"  />
+			
+			<view name="bboxview" width="${parent.width}" >
+				<view name="originalbboxview" width="${parent.width*0.49}">
+					<text name="bboxtext" text="Bounding Box:" />
+					<view name="srsview">
+						<text text="SRS: " />
+						<text name="srstext" text="" />
+						<simplelayout axis="x" spacing="4" />
+					</view>	
+					<view name="minlongview" width="${parent.width}">
+						<text text="Min Long: " width="${parent.width*0.5}" multiline="true" />
+						<edittext name="minlong" text="" width="${parent.width*0.5}" >
+						</edittext>
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<view name="maxlongview" width="${parent.width}">
+						<text text="Max Long: " width="${parent.width*0.5}" multiline="true" />
+						<edittext name="maxlong" text="" width="${parent.width*0.5}" >
+						</edittext>
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<view name="minlatview" width="${parent.width}">
+						<text text="Min Lat: " width="${parent.width*0.5}" multiline="true" />
+						<edittext name="minlat" text="" width="${parent.width*0.5}" >
+						</edittext>
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<view name="maxlatview" width="${parent.width}">
+						<text text="Max Lat: " multiline="true" width="${parent.width*0.5}" />
+						<edittext name="maxlat" text="" width="${parent.width*0.5}" >
+						</edittext>
+						<simplelayout axis="x" spacing="4"  />
+					</view>
+					<simplelayout axis="y" spacing="2" />
+				</view>
+				<view name="visiblebboxview" width="${parent.width*0.49}">
+					<text name="bboxtext" text="Visible Bounding Box:" />
+					<view name="srsview">
+						<text text="SRS: " />
+						<text name="srstext" text="" />
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<view name="minlongview" width="${parent.width}">
+						<text text="Min Long: "  width="${parent.width*0.5}" multiline="true" />
+						<text name="minlong" text="" width="${parent.width*0.5}" />
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<view name="maxlongview" width="${parent.width}">
+						<text text="Max Long: " width="${parent.width*0.5}" multiline="true" />
+						<text name="maxlong" text="" width="${parent.width*0.5}" />
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<view name="minlatview" width="${parent.width}">
+						<text text="Min Lat: " width="${parent.width*0.5}" multiline="true" />
+						<text name="minlat" text="" width="${parent.width*0.5}" />
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<view name="maxlatview" width="${parent.width}">
+						<text text="Max Lat: " width="${parent.width*0.5}" multiline="true" />
+						<text name="maxlat" text="" width="${parent.width*0.5}" />
+						<simplelayout axis="x" spacing="4" />
+					</view>
+					<simplelayout axis="y" spacing="2" />
+				</view>
+				<simplelayout axis="x" spacing="5" />
+			</view>
+			<button name="applybtn"  text="Apply Changes" onclick="classroot.apply()" />
+			<simplelayout name="lay" axis="y" spacing="5" />
+		</view>
+		<vscrollbar name="vscroll" visible="${this.scrollable}"  height="${parent.height}" scrolltarget="${parent.panelview}" align="right" />
+		<hscrollbar name="hscroll" visible="${this.scrollable}" width="${parent.width}" scrolltarget="${parent.panelview}" valign="bottom"/> 
+	</view>	
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

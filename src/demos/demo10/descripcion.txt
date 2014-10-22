@@ -1,0 +1,7 @@
+Hacer una demo en la cual podamos visualizar la posicion del puntero sobre el mapa en LatLon (WGS-84)
+Utilizar las capas de DEMIS. La demo es similar a la 1, pero se visualizan en el margen inferior derecho
+las coordenadas del puntero. En tanto que del lado inferior izquierdo de la pantalla se deberia ver 
+dos textarea a los cuales se los llena con los valores de la posicion en coordenadas cuando se hace click sobre 
+el mapa (o sea, se llenan los campos al momento de hacer el click)
+Alternativamente, se debe de agregar un boton que te centra la imagen en la posicion definida por los datos
+de posicion que esos mismos textarea contengan.

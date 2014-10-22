@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="srs.lzx" />
+<include href="../boundingbox.lzx" />
+
+<class name="mercatorsrs" extends="srs">
+	<attribute name="maxbbox" value="${new boundingbox(null)}" />
+	<attribute name="srsname" value="mercatorsrs" />
+	<attribute name="earthRadius" type="number" value="6378137" />
+	<attribute name="WGS84Minx" type="number" value="-180" />
+	<attribute name="WGS84Maxx" type="number" value="180" />
+	<attribute name="WGS84Miny" type="number" value="-85.0511287798066" />
+	<attribute name="WGS84Maxy" type="number" value="85.0511287798066" />
+	
+	<handler name="oninit">
+		this.maxbbox.setMinx(this.WGS84LongToX(this.WGS84Minx));
+		this.maxbbox.setMaxx(this.WGS84LongToX(this.WGS84Maxx));
+		this.maxbbox.setMiny(this.WGS84LatToY(this.WGS84Miny));
+		this.maxbbox.setMaxy(this.WGS84LatToY(this.WGS84Maxy));
+		//Debug.write(this.maxbbox);
+	</handler>
+	
+	<method name="WGS84LatToY" args="latitudeDegrees">
+	<![CDATA[
+		if (latitudeDegrees < WGS84Miny)
+			return this.latToY(WGS84Miny, this.earthRadius);
+			
+		if (latitudeDegrees > WGS84Maxy)
+			return this.latToY(WGS84Maxy, this.earthRadius);
+
+		return this.latToY(latitudeDegrees, this.earthRadius);
+	]]>
+	</method>
+	
+	<method name="yToWGS84Lat" args="dy">
+		return this.yToLat(dy, this.earthRadius);
+	</method>
+	
+	<method name="WGS84LongToX" args="longDegrees">
+	<![CDATA[
+		return this.longToX(longDegrees, this.earthRadius);
+	]]>
+    </method>
+    
+    <method name="xToWGS84Long" args="dx">    
+		return this.xToLong(dx, this.earthRadius);
+	</method>
+	
+	<method name="latToY" args="latitudeDegrees, radius">
+		var latitude = this.degreesToRadians(latitudeDegrees);
+    	return (radius/2.0) *  Math.log( (1.0 + Math.sin(latitude)) /  (1.0 - Math.sin(latitude)) );
+	</method>
+	
+	<method name="yToLat" args="dy, radius">
+	    var latitude =  (Math.PI/2) - (2 * Math.atan( Math.exp(-1.0 * dy / radius)));
+   		return this.radiansToDegrees(latitude);
+	</method>
+	
+	<method name="longToX" args="longDegrees, radius">
+    	var longitude = this.degreesToRadians(longDegrees);
+    	return (radius * longitude);
+    </method>
+    
+    <method name="xToLong" args="dx, radius"> 
+		var longRadians = dx/radius;
+    	var longDegrees = this.radiansToDegrees(longRadians);
+    	return longDegrees;
+    	
+	    var rotations = Math.floor((longDegrees + 180)/360);
+    	return longDegrees - (rotations * 360);
+	</method>
+		
+	<method name="degreesToRadians" args="deg">
+		return deg*(Math.PI/180);
+	</method>
+	
+	<method name="radiansToDegrees" args="rads">
+		return rads*(180/Math.PI);
+	</method>
+	
+</class>
+
+</library> 
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="mapcontroller">
+	<attribute name="map" value="null" />
+	<attribute name="mapvisor" value="null" />
+	
+	<method name="setMapVisor" args="mv">
+		this.setAttribute("mapvisor", mv);
+	</method>
+	
+	<handler name="onmapvisor">
+		if (!this.mapvisor.getMap())
+			new LzDelegate(this, "retrieveMap", this.mapvisor, "onsetmap"); else
+			this.setMap(this.mapvisor.getMap());
+	</handler>
+	
+	<method name="retrieveMap">
+		this.setMap(this.mapvisor.getMap());
+	</method>
+	
+	<method name="setMap" args="map">
+		Debug.write("SETTING MAP CONTROLLER");
+		this.map = map;
+		new LzDelegate(this, "adjustMap", this.mapvisor, "onadjustbbox");
+		new LzDelegate(this, "setBBox", this.mapvisor, "onchangebbox");
+		new LzDelegate(this, "notifyBBoxChangeToView", this.map, "onsetbbox");
+		new LzDelegate(this, "notifyBBoxAdjustmentToView", this.map, "onadjustbbox");
+		new LzDelegate(this, "notifyReferenceLayerChange", this.map, "onchangereferencelayer");
+		new LzDelegate(this, "notifyServerUrl", this.map, "onupdateserverurl");
+	</method>
+	
+	<method name="notifyBBoxChangeToView">
+		this.mapvisor.notifyBBoxChange();
+	</method>
+	
+	<method name="notifyBBoxAdjustmentToView">
+		this.mapvisor.notifyBBoxAdjustment();
+	</method>
+	
+	<method name="notifyReferenceLayerChange">
+		this.mapvisor.populateReferences();
+	</method>
+
+	<method name="notifyServerUrl">
+		this.mapvisor.reload();
+	</method>
+
+	<method name="adjustMap" args="adjbbox">
+		Debug.write("ADJUSTING BBOX");
+		this.map.adjustBBox(adjbbox);
+	</method>
+	
+	<method name="setBBox" args="bbox">
+		//Debug.write("SETTING BBOX");
+		this.map.setCurrentBBox(bbox);
+	</method>	
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

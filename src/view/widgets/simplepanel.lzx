@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="simplepanel" extends="view" initstage="early">
+
+	<attribute name="fact" value="${new factory()}" />
+
+	<method name="getPanelArea">
+		return this.contents.panelview;
+	</method>
+	
+	<method name="setFactory" args="f">
+		this.fact = f;
+	</method>
+	
+	<view name="contents" width="${parent.width*0.98 - this.vscroll.width}" height="${parent.height*0.9 - this.hscroll.height}" clip="true">
+		<view name="panelview"   >
+			<simplelayout name="lay" axis="y" spacing="1" />
+		</view>
+		<vscrollbar name="vscroll" visible="${this.scrollable}"  height="${parent.height}" scrolltarget="${parent.panelview}" align="right" />
+		<hscrollbar name="hscroll" visible="${this.scrollable}" width="${parent.width}" scrolltarget="${parent.panelview}" valign="bottom"/> 
+	</view>
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

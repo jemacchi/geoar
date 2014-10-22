@@ -1,0 +1,1 @@
+Dos mapas independientes (uno de google y otro wms) mostrando panel de mapas y capas, probando tambien la exclusion/inclusion de capas

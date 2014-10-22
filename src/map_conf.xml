@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<mapconfs>
+	<mapconf name="main">
+		<referencesurl>references.xml</referencesurl>
+		<defaultservers>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 0</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 1</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 2</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 3</server>	
+		</defaultservers>
+		<serverlist>
+  		</serverlist>
+		<defaultlocation srs="epsg4326">
+			<minlatitude>-90</minlatitude>
+			<minlongitude>-180</minlongitude>
+			<maxlatitude>90</maxlatitude>
+			<maxlongitude>180</maxlongitude>
+		</defaultlocation>
+		<maxlocation srs="epsg4326">
+			<minlatitude>-90</minlatitude>
+			<minlongitude>-180</minlongitude>
+			<maxlatitude>90</maxlatitude>
+			<maxlongitude>180</maxlongitude>
+		</maxlocation>
+	</mapconf>
+	<mapconf name="context">
+		<defaultservers>
+			<server url="http://www2.demis.nl/mapserver/request.asp?" proxied="false">demis.nl</server>
+		</defaultservers>
+		<serverlist>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 0</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 1</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 2</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 3</server>		
+		</serverlist>
+		<defaultlocation srs="epsg4326">
+			<minlatitude>-90</minlatitude>
+			<minlongitude>-180</minlongitude>
+			<maxlatitude>90</maxlatitude>
+			<maxlongitude>180</maxlongitude>
+		</defaultlocation>
+		<maxlocation srs="epsg4326">
+			<minlatitude>-120</minlatitude>
+			<minlongitude>-240</minlongitude>
+			<maxlatitude>120</maxlatitude>
+			<maxlongitude>240</maxlongitude>
+		</maxlocation>
+	</mapconf>	
+</mapconfs>

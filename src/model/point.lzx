@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<library>
+
+<include href="reference.lzx" />
+<include href="srs/coordinate.lzx" />
+
+<class name="point" extends="reference">
+	<attribute name="coord" value="${new coordinate()}" />
+	<attribute name="iconurl" type="string" value="" />
+	<attribute name="element" value="null" />
+	
+	<handler name="onsrs">
+		if (this.coord.getSrsName() != "null")
+			this.coord.setSrsName(this.srs.getName());
+	</handler>
+	
+	<method name="getPointX">
+		return this.coord.getXCoord();
+	</method>
+
+	<method name="setPointX" args="newx">
+		this.coord.setXCoord(newx);
+	</method>
+
+	<method name="getPointY">
+		return this.coord.getYCoord();
+	</method>
+	
+	<method name="setPointY" args="newy">
+		this.coord.setYCoord(newy);
+	</method>	
+	
+	<method name="getWGS84Coordinate">
+		var newc = new wgs84coordinate();
+		newc.setXCoord(this.srs.xToWGS84Long(this.getPointX()));
+		newc.setYCoord(this.srs.yToWGS84Lat(this.getPointY()));
+		
+		//Debug.write("WGS84 COORDINATE: ");
+		//Debug.write(newc);
+		return newc;
+	</method>
+	
+	<method name="getCoordinate">
+		return this.coord;
+	</method>
+	
+	<method name="setCoordinate" args="c">
+		this.coord = c;
+		this.coord.setSrsName(this.srs.getSrsName());
+	</method>
+	
+	<method name="getIconUrl">
+		return this.iconurl;
+	</method>
+	
+	<method name="setIconUrl" args="url">
+		this.iconurl = url;
+	</method>	
+	
+	<method name="isInArea" args="bbox" >
+	<![CDATA[
+		if ((this.px > bbox.getMinx()) && (this.px < bbox.getMaxx()))
+			if ((this.py > bbox.getMiny()) && (this.py < bbox.getMaxy()))
+				return true;
+		
+		return false;
+	]]>
+	</method>	
+
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

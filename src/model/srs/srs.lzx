@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="srs">
+	<attribute name="maxbbox" value="null" />
+	<attribute name="srsname" type="string" value="" />
+	
+	<method name="getSrsName">
+		return this.srsname;
+	</method>
+	
+	<method name="setSrsName" args="newname">
+		this.srsname = newname
+	</method>
+	
+	<method name="getMaxBBox">
+		return this.maxbbox;
+	</method>
+	
+	<method name="setMaxBBox" args="bbox">
+		this.maxbbox = bbox;
+	</method>
+	
+	<!-- Devuelve un string con la traduccion del punto. El punto tiene que estar expresado en el sistema de unidades del srs, no en pixeles -->
+	<method name="translateToHumanReadable" args="x, y, visor" />
+	
+	<method name="WGS84LatToY" args="latitudeDegrees">
+		return latitudeDegrees;
+	</method>
+	
+	<method name="yToWGS84Lat" args="dy">
+		return dy;
+	</method>
+	
+	<method name="WGS84LongToX" args="longDegrees">
+		return longDegrees;
+    </method>
+    
+    <method name="xToWGS84Long" args="dx">    
+    	return dx;
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

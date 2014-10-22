@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<mapconfs>
+	<mapconf name="main">
+		<defaultservers>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 0</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 1</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 2</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 3</server>
+		</defaultservers>
+		<serverlist>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 0</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 1</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 2</server>
+			<server proxied="false" url="http://kh0.google.com/kh?n=404">Google Server 3</server>				
+		</serverlist>
+		<defaultlocation srs="epsg4326">
+			<minlatitude>-41</minlatitude>
+			<minlongitude>-63</minlongitude>
+			<maxlatitude>-34</maxlatitude>
+			<maxlongitude>-56</maxlongitude>
+		</defaultlocation>
+		<maxlocation srs="epsg4326">
+			<minlatitude>-90</minlatitude>
+			<minlongitude>-180</minlongitude>
+			<maxlatitude>90</maxlatitude>
+			<maxlongitude>180</maxlongitude>
+		</maxlocation>
+	</mapconf>	
+</mapconfs>

@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<canvas width="700" height="350" debug="false" proxied="false">
+
+<include href="../../view/wmsmapvisor.lzx" />
+<include href="../../view/googlemapvisor.lzx" />
+<include href="../../view/commands/dragcommand.lzx" />
+<include href="../../view/commands/zoominselectioncommand.lzx" />
+<include href="../../view/commands/zoomoutselectioncommand.lzx" />
+<include href="../../utils/fileconfigurationmanager.lzx" />
+<include href="../../utils/hashtable.lzx" />
+<include href="../../view/widgets/imagecommandbutton.lzx" />
+<include href="../../view/linker/linksmanager.lzx" />
+
+<resource name="panresource">
+	<frame src="../../images/Pan-up.png" />
+	<frame src="../../images/Pan-over.png" />
+	<frame src="../../images/Pan-down.png" />
+</resource>
+
+<resource name="zoominresource">
+	<frame src="../../images/ZoomIn-up.png" />
+	<frame src="../../images/ZoomIn-over.png" />
+	<frame src="../../images/ZoomIn-down.png" />
+</resource>
+
+<resource name="zoomoutresource">
+	<frame src="../../images/ZoomOut-up.png" />
+	<frame src="../../images/ZoomOut-over.png" />
+	<frame src="../../images/ZoomOut-down.png" />
+</resource>
+
+<resource name="linkresource">
+	<frame src="images/Link-up.png" />
+	<frame src="images/Link-over.png" />
+	<frame src="images/Link-down.png" />
+</resource>
+
+	<attribute name="visors" value="${new hashtable()}" />
+	<attribute name="leftbuttons" value="${new Array()}" />
+	<attribute name="rightbuttons" value="${new Array()}" />
+
+	<fileconfigurationmanager name="cmanager" oninit="this.setConfigurationFile('map_conf.xml')">
+		<handler name="onconfigurationloaded">
+			<![CDATA[
+				var keys = canvas.visors.getKeys();
+				for (var i=0; i< keys.length; i++){
+					var conf =  this.getConfiguration(keys[i]);
+					conf.setMap(canvas.visors.get(keys[i]).getMap());	
+				}
+			]]>
+		</handler>
+	</fileconfigurationmanager>
+	
+	<linksmanager name="lmanager" />
+	
+	<method name="addLeftCommandButton" args="b">
+		this.leftbuttons.push(b);
+		new LzDelegate(this, "deactivateLeftButtons", b, "onactivate")
+	</method>	
+		
+	<method name="deactivateLeftButtons" args="b">
+	<![CDATA[
+		for (var i=0; i<this.leftbuttons.length;i++)
+			if (this.leftbuttons[i] != b)
+				if (this.leftbuttons[i].isActive())
+					this.leftbuttons[i].setActive(false);
+	]]>
+	</method>
+
+	<method name="addRightCommandButton" args="b">
+		this.rightbuttons.push(b);
+		new LzDelegate(this, "deactivateRightButtons", b, "onactivate")
+	</method>	
+		
+	<method name="deactivateRightButtons" args="b">
+	<![CDATA[
+		for (var i=0; i<this.rightbuttons.length;i++)
+			if (this.rightbuttons[i] != b)
+				if (this.rightbuttons[i].isActive())
+					this.rightbuttons[i].setActive(false);
+	]]>
+	</method>
+
+
+	<view name="contents" width="${canvas.width}" height="${canvas.height}">
+	
+		<view name="mapview" height="${parent.height}" width="${parent.width}" >
+			<view name="leftmapview" width="${parent.width*0.5}" height="${parent.height}">
+				<view name="buttonview" width="${parent.width}" height="${parent.height*0.03}"  y="10" oninit="this.bringToFront();">
+					<imagecommandbutton name="panview" resource="panresource" command="${new dragcommand(null, {visor: parent.parent.leftmap })}" oninit="canvas.addLeftCommandButton(this)"  />
+					<imagecommandbutton name="zoominview" resource="zoominresource" command="${new zoominselectioncommand(null, {visor: parent.parent.leftmap })}" oninit="canvas.addLeftCommandButton(this)"  />
+					<imagecommandbutton name="zoomoutview" resource="zoomoutresource" command="${new zoomoutselectioncommand(null, {visor: parent.parent.leftmap })}" oninit="canvas.addLeftCommandButton(this)"  />
+					<simplelayout axis="x" spacing="10" />
+				</view>
+				<wmsmapvisor name="leftmap" width="${parent.width}" height="${parent.height}" granularity="2" surGranularity="1">
+					<handler name="oninit">
+						canvas.visors.put(this.name, this);
+					</handler>
+				</wmsmapvisor>	
+			</view>
+			<view name="rightmapview" width="${parent.width*0.5}" height="${parent.height}">
+				<view name="buttonview" width="${parent.width}" height="${parent.height*0.03}"  y="10" oninit="this.bringToFront();">
+					<imagecommandbutton name="panview" resource="panresource" command="${new dragcommand(null, {visor: parent.parent.rightmap })}" oninit="canvas.addRightCommandButton(this)"  />
+					<imagecommandbutton name="zoominview" resource="zoominresource" command="${new zoominselectioncommand(null, {visor: parent.parent.rightmap })}" oninit="canvas.addRightCommandButton(this)"  />
+					<imagecommandbutton name="zoomoutview" resource="zoomoutresource" command="${new zoomoutselectioncommand(null, {visor: parent.parent.rightmap })}" oninit="canvas.addRightCommandButton(this)"  />
+					<simplelayout axis="x" spacing="10" />
+				</view>
+				<wmsmapvisor name="rightmap" width="${parent.width}" height="${parent.height}" granularity="2" surGranularity="1">
+					<handler name="oninit">
+						canvas.visors.put(this.name, this);
+					</handler>
+				</wmsmapvisor>	
+			</view>
+			<simplelayout axis="x" />
+		</view>
+		<view name="linkbutton" x="${parent.width/2 - this.width/2}" y="${parent.height/2 - this.height/2}" resource="linkresource" >
+			<attribute name="active" type="boolean" value="false" />
+			<handler name="onclick">
+				this.active = !this.active
+				if (this.active){
+					canvas.lmanager.enableLinks();
+					canvas.lmanager.disableAllSenderLinks(parent.mapview.rightmapview.rightmap);	
+					} else
+					canvas.lmanager.disableLinks();
+			</handler>
+			<handler name="onmouseover">
+					this.setResourceNumber(2);
+			</handler>
+			<handler name="onmouseout">
+				if (!this.active)
+					this.setResourceNumber(1); else
+					this.setResourceNumber(3);
+			</handler>
+			<handler name="onmousedown">
+				this.setResourceNumber(3)
+			</handler>
+		</view>
+	</view>
+	
+	<handler name="oninit">
+		this.lmanager.createCompleteMapLink(this.contents.mapview.leftmapview.leftmap, this.contents.mapview.rightmapview.rightmap);
+		this.lmanager.disableLinks();
+	</handler>
+
+</canvas>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

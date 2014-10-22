@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="abstractcommand">
+	<attribute name="visor" value="null"/>
+	<attribute name="commandname" type="string" value="abstractcommand" />
+	
+	<method name="setVisor" args="v">
+		this.visor = v;
+	</method>
+	
+	<method name="getCommandName">	
+		return this.commandname;
+	</method>
+	
+	<method name="setCommandName" args="n" >
+		this.commandname = n;
+	</method>
+	
+	<method name="register" />
+	
+	<method name="execute" />
+	
+	<method name="unregister"  />
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,4 @@
+Esta demo coloca dos mapas de iguales dimensiones uno al lado del otro, con un boton que simule un linkage (una cadena)
+para que al ser presionado los mapas queden vinculados y que el movimiento en uno de ellos 
+se vea reflejado en el otro.
+Ademas los mapas deben ser de diferentes WMS (podriamos usar DEMIS y NASA, u otro).

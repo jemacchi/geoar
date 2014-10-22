@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="hashtable">
+	<attribute name="values" value="${new Array()}" />
+	<attribute name="length" type="number" value="0" />
+	
+	<method name="getValues">
+		return this.values;
+	</method>
+	
+	<method name="getKeys">
+		var keys = new Array();
+		
+		for (var i in this.values)
+			keys.push(i.substring(1, i.length));
+			
+		return keys;
+	</method>
+	
+	<method name="containsKey" args="key">
+	<![CDATA[
+ 	  	for (var i in this.values) {
+ 	   		if ((i == ("v" + key)) && (this.values[i] != null) && (typeof(this.values[i])!= "undefined")) 
+        		return true;
+    	}
+    	
+    	return false;
+    ]]>
+	</method>
+	
+	<method name="containsValue" args="value">
+		var contains = false;
+    	if (value != null) {
+        	for (var i in this.values) {
+            	if (this.hashtable[i] == value) {
+                	contains = true;
+                	break;
+            	}
+        	}
+    	}
+    	return contains;
+	</method>
+	
+	<method name="contains" args="key">
+	<![CDATA[
+		var value= this.values["v" + key];
+		if ((value!=null) && (typeof(value)!="undefined"))
+			return true; else
+			return false;
+	]]>
+	</method>
+	
+	<method name="get" args="key">
+		if (this.contains(key))
+			return this.values["v" + key];			
+		else
+			return null;
+	</method>
+	
+	<method name="isEmpty">
+		return this.length == 0;
+	</method>
+	
+	<method name="put" args="key, value">
+		if (!this.contains(key))
+			this.length++;
+
+		this.values["v" + key] = value;
+	</method>
+	
+	<method name="clear">
+		this.values = new Array();
+	</method>
+	
+	<method name="remove" args="key">
+		this.values["v" + key] = null;
+		length--;
+	</method>
+	
+	<method name="getLength">
+		return this.length;
+	</method>
+	
+	<method name="toArray">
+		var arr = new Array();
+		var i=0;
+		for (var j in this.values)
+			if (this.values[j])
+				arr[i++] = this.values[j];
+			
+		return arr;
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="mapvisor.lzx" />
+<include href="../model/googlefactory.lzx" />
+<include href="../model/googlesatfactory.lzx" />
+
+<class name="googlemapvisor" extends="mapvisor">
+	<attribute name="tilewidth" type="number" value="${this.tilesize}" />
+	<attribute name="tileheight" type="number" value="${this.tilesize}" />
+	<attribute name="tilesize" type="number" value="256" />
+	<attribute name="maptype" type="string" value="s" />
+	<attribute name="bitmapOrigo" value="${new Array()}" />
+	<attribute name="circumference" type="number" value="0" />
+	<attribute name="radius" type="number" value="0" />
+	<attribute name="maporigin" value="${new Array()}" />
+	
+	<method name="setRadius" args="r">
+		this.radius = r;
+	</method>
+	
+	<method name="getRadius">
+		return this.radius;
+	</method>
+	
+	<method name="getFactory">
+		if (this.maptype!= "s")
+			return new googlefactory(); else
+			return new googlesatfactory();
+	</method>
+	
+	<method name="adjustBoundingBox">
+	<![CDATA[
+		Debug.write("ADJUSTING GOOGLE");
+		
+		var bbox = this.map.getCurrentBBox();
+		//Debug.inspect(bbox);
+		
+		var zoomlevels = this.map.getZoomLevels();
+		var z = this.map.getZoom();
+
+		var tiles = Math.pow(2, this.map.getZoomLevels() - z);
+		this.circumference = this.tilesize * tiles;
+		this.maporigin['x'] = this.circumference/2;
+		this.maporigin['y'] = this.circumference/2;
+		this.radius = circumference/ (2 * Math.PI);
+		//Debug.write("CIRCUNFERENCE: " + circumference);
+		//Debug.write("RADIUS: " + this.radius);
+		//Debug.write("ORIGIN: " + this.maporigin['x']);
+		Debug.write("ZOOM LEVEL: " + z);
+		
+		var th=this.getTileHeight();
+		var tw=this.getTileWidth();
+		
+		//Debug.write("TILE HEIGHT: " + th);
+		//Debug.write("TILE WIDTH: " + tw);
+
+		var adjbbox = new boundingbox();
+		
+		//Debug.write("MINX : " + bbox.getMinx() + " TO: " + (parseInt(bbox.getMinx()/tw) * tw ));
+		//Debug.write(bbox.getMinx()/tw);
+		//Debug.write("MAXY : " + bbox.getMaxy() + " TO: " + (parseInt(bbox.getMaxy()/th)  * th ));
+		//Debug.write(bbox.getMaxy()/th);
+		
+		//Debug.write("ROUNDING: " + (bbox.getMinx()/tw) + " TO: " + Math.round(bbox.getMinx()/tw) );
+		
+		adjbbox.setMinx(Math.round(bbox.getMinx()/tw) * tw );
+		adjbbox.setMaxy(Math.round(bbox.getMaxy()/th)  * th );
+
+		//Debug.write("MAXX : " + bbox.getMaxx() + " TO: " + (adjbbox.getMinx() + (tw * this.getGranularity())));
+		//Debug.write("MINY : " + bbox.getMiny() + " TO: " + (adjbbox.getMaxy() - (th * this.getGranularity())));
+		
+		adjbbox.setMaxx(adjbbox.getMinx() + (tw * this.getGranularity()));
+		adjbbox.setMiny(adjbbox.getMaxy() - (th * this.getGranularity()));
+		
+		adjbbox.setSrs(bbox.getSrs());
+		//Debug.inspect(adjbbox);
+		
+		//Debug.write("MINX: " + this.map.coordinateSystem.xToWGS84Long(adjbbox.minx) );
+		//Debug.write("MAXX: " + this.map.coordinateSystem.xToWGS84Long(adjbbox.maxx) );
+		//Debug.write("MINY: " + this.map.coordinateSystem.yToWGS84Lat(adjbbox.miny) );
+		//Debug.write("MAXY: " + this.map.coordinateSystem.yToWGS84Lat(adjbbox.maxy) );
+		
+		this.onadjustbbox.sendEvent(adjbbox);
+	]]>
+	</method>
+	
+	<method name="reload">
+		if (!this.map.isLoaded()){
+			LzTimer.addTimer(new LzDelegate(this, "reload"), 100)
+			return;
+		}
+	
+		this.initializeLoading();
+		this.tilewidth = this.tilesize;
+		this.tileheight = this.tilesize;
+		this.calculateVisibleBBox();
+		this.populateReferences();
+		this.drawArea();
+		this.getActiveLayer().showSelectionBox();
+	</method>
+	
+	<method name="getGranularity">
+		return this.granularity;
+	</method>
+	
+	<method name="getTileWidth">
+	<![CDATA[
+		var mbboxwidth = this.map.getCoordinateSystem().getMaxBBox().getWidth();
+		var z = this.map.getZoom();	
+		
+		//Debug.write("MAXBBOX WIDTH: " + mbbox.getWidth());
+		//Debug.write("TILES : " + Math.pow(2,(17-z)));
+		
+		return mbboxwidth/(Math.pow(2,(17-z)));
+	]]>
+	</method>
+	
+	<method name="getTileHeight">
+	<![CDATA[
+		var mbboxheight = this.map.getCoordinateSystem().getMaxBBox().getHeight();
+		var z = this.map.getZoom();		
+				
+		return mbboxheight/(Math.pow(2,(17-z)));		
+	]]>	
+	</method>
+	
+	<method name="getXCoordsPerPixel">
+		var bboxwidth = this.map.getCoordinateSystem().getMaxBBox().getWidth();
+		return bboxwidth / this.circumference;
+	</method>
+	
+	<method name="getPixelsPerXCoord">
+		var bboxwidth = this.map.getCoordinateSystem().getMaxBBox().getWidth();
+		return  this.circumference / bboxwidth;
+	</method>
+	
+	<method name="getYCoordsPerPixel">
+		var bboxheight = this.map.getCoordinateSystem().getMaxBBox().getHeight();
+		return bboxheight / this.circumference;
+	</method>
+	
+	<method name="getPixelsPerYCoord">
+		var bboxheight = this.map.getCoordinateSystem().getMaxBBox().getHeight();
+		return this.circumference / bboxheight;
+	</method>
+	
+	<method name="moveToWGS84Lat" args="lat">
+	<![CDATA[	
+		var minlat = this.getVisibleBBox().getSrs().WGS84Miny;
+		var vbbox = this.getVisibleBBox().getConvertedWGS84BBox();
+		
+		var mv = vbbox.getMaxy() - lat; 
+		
+		//Debug.write("DIFF:" + mv);
+
+		if ((vbbox.getMiny() - mv) <minlat)
+			return;
+			
+		var maxlat = this.getVisibleBBox().getSrs().WGS84Maxy;
+		
+		//Debug.write("NEW MAX: " + (vbbox.getMaxy() - mv ) );
+		
+		if ((vbbox.getMaxy() - mv )>maxlat)
+			return;
+	
+		super.moveToWGS84Lat(lat);	
+	]]>
+	</method>
+	
+	<method name="moveRelWGS84Lat" args="rely">
+	<![CDATA[
+		//Debug.write("MOVING RELATIVE Y ");
+		//Debug.write("DST: " + (bbox.maxy + rely) );
+		var vbbox = this.getVisibleBBox().getConvertedWGS84BBox();
+		var minlat = bbox.getSrs().WGS84Miny;
+		if ((vbbox.getMiny() + rely)<minlat)
+			return;
+			
+		var maxlat = this.getCurrentBBox().getSrs().WGS84Maxy;
+		
+		if ((vbbox.getMaxy() + rely)>maxlat)
+			return;
+	
+		Debug.write("MOVING GOOGLE RELY: "+ rely);
+		super.moveRelWGS84Lat(rely);
+	]]>
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

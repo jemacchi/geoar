@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<canvas width="600" height="600" debug="false" proxied="false">
+
+<include href="../../view/wmsmapvisor.lzx" />
+<include href="../../view/commands/dragcommand.lzx" />
+<include href="../../view/commands/zoominselectioncommand.lzx" />
+<include href="../../view/commands/zoomoutselectioncommand.lzx" />
+<include href="../../utils/fileconfigurationmanager.lzx" />
+<include href="../../utils/hashtable.lzx" />
+<include href="../../view/widgets/imagecommandbutton.lzx" />
+
+<resource name="panresource">
+	<frame src="../../images/Pan-up.png" />
+	<frame src="../../images/Pan-over.png" />
+	<frame src="../../images/Pan-down.png" />
+</resource>
+
+<resource name="zoominresource">
+	<frame src="../../images/ZoomIn-up.png" />
+	<frame src="../../images/ZoomIn-over.png" />
+	<frame src="../../images/ZoomIn-down.png" />
+</resource>
+
+<resource name="zoomoutresource">
+	<frame src="../../images/ZoomOut-up.png" />
+	<frame src="../../images/ZoomOut-over.png" />
+	<frame src="../../images/ZoomOut-down.png" />
+</resource>
+
+	<attribute name="visors" value="${new hashtable()}" />
+	<attribute name="buttons" value="${new Array()}" />
+
+	<fileconfigurationmanager name="cmanager" oninit="this.setConfigurationFile('map_conf.xml')">
+		<handler name="onconfigurationloaded">
+			<![CDATA[
+				var keys = canvas.visors.getKeys();
+				for (var i=0; i< keys.length; i++){
+					var conf =  this.getConfiguration(keys[i]);
+					conf.setMap(canvas.visors.get(keys[i]).getMap());	
+				}
+			]]>
+		</handler>
+	</fileconfigurationmanager>	
+	
+	<method name="addCommandButton" args="b">
+		this.buttons.push(b);
+		new LzDelegate(this, "deactivateButtons", b, "onactivate")
+	</method>	
+	
+	<method name="deactivateButtons" args="b">
+	<![CDATA[
+		for (var i=0; i<this.buttons.length;i++)
+			if (this.buttons[i] != b)
+				if (this.buttons[i].isActive())
+					this.buttons[i].setActive(false);
+	]]>
+	</method>
+
+	<view name="contents" width="${canvas.width}" height="${canvas.height}">
+	
+		<view name="mapview" height="${parent.height}" width="${parent.width}" >
+			<view name="buttonview" width="${parent.width}" height="${parent.height*0.03}"  y="10" oninit="this.bringToFront()">
+				<imagecommandbutton name="panview" resource="panresource" command="${new dragcommand(null, {visor: parent.parent.mapcontainer.main })}" oninit="canvas.addCommandButton(this)"  />
+				<imagecommandbutton name="zoominview" resource="zoominresource" command="${new zoominselectioncommand(null, {visor: parent.parent.mapcontainer.main })}" oninit="canvas.addCommandButton(this)"  />
+				<imagecommandbutton name="zoomoutview" resource="zoomoutresource" command="${new zoomoutselectioncommand(null, {visor: parent.parent.mapcontainer.main })}" oninit="canvas.addCommandButton(this)"  />
+				<simplelayout axis="x" spacing="10" inset="10"/>
+			</view>
+			<view name="mapcontainer" width="${parent.width}" height="${parent.height}" oninit="this.sendToBack()">
+				<wmsmapvisor name="main" height="${parent.height}" width="${parent.width}"  x="0" y="0" map="${this.getFactory().getNewMap()}" granularity="2" surGranularity="1"  >
+					<handler name="oninit">
+						canvas.visors.put(this.name, this);
+					</handler>
+					<handler name="onpos" args="pos">
+						parent.coordinatesView.info.coordx.setText(pos.getXCoord());
+						parent.coordinatesView.info.coordy.setText(pos.getYCoord());
+					</handler>
+					<handler name="onclick">
+						var pos = this.getCurrentWGS84Position();
+						parent.coordinatesView.coord.coordx.setText(pos.getXCoord());
+						parent.coordinatesView.coord.coordy.setText(pos.getYCoord());
+					</handler>
+				</wmsmapvisor>
+				<view name="coordinatesView" x="0" y="${parent.height*0.9}" height="${parent.height*0.1}" width="${parent.width}" bgcolor="white" opacity="0.6">
+					<view name="coord" width="${parent.width*0.35}" valign="middle" >
+						<edittext name="coordx" width="${parent.width*0.4}" text="" />
+						<edittext name="coordy" width="${parent.width*0.4}" text="" />
+						<button name="centerbtn" text="Center" onclick="parent.parent.parent.main.centerOnWGS84Coord(new wgs84coordinate(null, {xcoord: parseInt(parent.coordx.getText()), ycoord: parseInt(parent.coordy.getText())}))"/>
+						<simplelayout axis="x" spacing ="3" />
+					</view>
+					<view name="info" width="${parent.width*0.65}" valign="middle">
+						<text text="Lon: "  />
+						<text name="coordx" text="" />
+						<text text="Lat: "  />
+						<text name="coordy" text="" />
+						<simplelayout axis="x"  spacing="3" />
+					</view>
+					<simplelayout axis="x" spacing="40" inset="10" />
+				</view>				
+			</view>
+		</view>
+	</view>
+
+</canvas>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

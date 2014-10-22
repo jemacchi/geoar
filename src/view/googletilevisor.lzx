@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="tilevisor.lzx" />
+
+<class name="googletilevisor" extends="tilevisor">
+
+	<event name="ontilex" />
+	<event name="ontiley" />
+	
+	<method name="translateXCoord" args="x">
+		return;
+		var srs = this.parentvisor.getMap().getCoordinateSystem();
+		var unit = this.width / bbox.getWidth();
+		//Debug.write("DIF: " + ((x- bbox.getMinx())*unit));
+		//Debug.write("UNIT: " + unit );
+		//Debug.write("REF X: " + x);
+		//Debug.write("BBOX MINX: " + bbox.getMinx());
+		
+		return (x- bbox.getMinx())*unit;
+	</method>
+	
+	<method name="translateYCoord" args="y">
+		return;
+		var bbox = this.tile.getBBox();
+		var unit = this.height / bbox.getHeight();
+		
+		return (bbox.getMaxy() - y)*unit;
+	</method>
+	
+	<method name="retrieveBBox">
+		var bbox = this.calculateBBox();
+		var or = this.parentvisor.getMap().getMapOrigin();
+		//Debug.inspect(or);
+		var tilesize = this.parentvisor.getTileWidth();
+		this.ontilex.sendEvent(parseInt(bbox.getMinx()/tilesize) - or['x']);
+		this.ontiley.sendEvent(or['y'] - parseInt(bbox.getMaxy()/tilesize)); 
+		
+		onnewbbox.sendEvent(bbox);
+	</method>
+
+<!-- 
+	<method name="calculateBBox">
+	<![CDATA[
+		//Debug.write("CALCULATING BBOX");
+		var bbox = new boundingbox();
+		var cbbox = this.parentvisor.getCurrentBBox();
+		var tilewidth = this.parentvisor.getTileWidth();
+		var tileheight = this.parentvisor.getTileHeight();
+		
+		bbox.setMinx(cbbox.getMinx() + this.posx*tilewidth );
+		bbox.setMaxx(bbox.getMinx() + tilewidth);
+
+		bbox.setMaxy(cbbox.getMaxy() - this.posy*tileheight);
+		bbox.setMiny(bbox.getMaxy() - tileheight);
+		bbox.setSrs(this.parentvisor.getMap().getCoordinateSystem());
+		
+		
+	]]>
+	</method>
+	 -->
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

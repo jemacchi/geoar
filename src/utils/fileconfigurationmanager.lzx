@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="abstractconfigurationmanager.lzx" />
+<include href="hashtable.lzx" />
+<include href="mapconfiguration.lzx" />
+<include href="wmsmapconfiguration.lzx" />
+<include href="../model/mapserver.lzx" />
+<include href="../model/srs/mercatorsrs.lzx" />
+<include href="../model/srs/epsg4326srs.lzx" />
+
+<class name="fileconfigurationmanager" extends="abstractconfigurationmanager">
+	
+	<dataset name="conf" type="http" src="" querytype="POST" />
+
+	<handler name="onfilename">
+		this.conf.setSrc(this.filename);
+		this.conf.setQueryType("POST");
+		this.conf.doRequest();
+	</handler>
+	
+	<datapointer name="confsdp" xpath="local:conf:/mapconfs">
+		<handler name="ondata">
+		<![CDATA[
+			var confdp = this.dupePointer();
+			confdp.selectChild();	
+			var haschilds = true;
+			
+			while (haschilds){
+				var configuration = classroot.parseConfiguration(confdp);
+				//Debug.write("CONFIGURATION");
+				//Debug.write(configuration);
+				classroot.addConfiguration(configuration);
+				haschilds = confdp.selectNext();
+			}
+			
+			classroot.onconfigurationloaded.sendEvent();
+		]]>
+		</handler>
+	</datapointer>
+	
+</class>
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

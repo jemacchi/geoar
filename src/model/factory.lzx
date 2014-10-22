@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="compositetile.lzx" />
+<include href="../view/mapvisor.lzx" />
+<include href="../view/compositetilevisor.lzx" />
+<include href="../view/tilevisor.lzx" />
+<include href="../controllers/tilecontroller.lzx" />
+<include href="../controllers/compositetilecontroller.lzx" />
+<include href="../view/widgets/layerdescription.lzx" />
+<include href="../controllers/mapcontroller.lzx" />
+<include href="../controllers/layercontroller.lzx" />
+<include href="../controllers/mapoptionscontroller.lzx" />
+<include href="../view/widgets/layerspanel.lzx" />
+<include href="../view/widgets/mapspanel.lzx" />
+<include href="../view/widgets/mapoptionspanel.lzx" />
+<include href="../view/widgets/mapdescription.lzx" />
+<include href="../view/widgets/custommodaldialog.lzx" />
+
+<class name="factory">
+
+	<method name="getNewMap" />
+	
+	<method name="getNewTile" />
+	
+	<method name="getNewMapController">
+		return new mapcontroller();
+	</method>
+	
+	<method name="getNewMapVisor" args="map">
+		var newmvisor = new mapvisor(canvas);
+		newmvisor.setMap(map);
+		return newmvisor;
+	</method>
+	
+	<method name="getNewTileVisor" args="parentview">
+		var newtilevisor = new tilevisor(parentview);
+		newtilevisor.setTile(this.getNewTile());
+		return newtilevisor;
+	</method>
+	
+	<method name="getNewTileController">
+		return new tilecontroller();
+	</method>
+	
+	<method name="getLayerController">
+		return new layercontroller();
+	</method>
+	
+	<method name="getLayerDescription" args="parent">
+		return new layerdescription(parent);
+	</method>
+	
+	<method name="getLayersPanel" args="parent">
+		return new layerspanel(parent);
+	</method>
+	
+	<method name="getMapsPanel" args="parent">
+		return new mapspanel(parent);
+	</method>
+	
+	<method name="getMapOptionsPanel" args="parent">
+		return new mapoptionspanel(parent);
+	</method>
+	
+	<method name="getMapDescription" args="parent">
+		return new mapdescription(parent);
+	</method>
+	
+	<method name="createLayersDialog" args="parent, map">
+		var dialog = new custommodaldialog(parent);
+		var panel = this.getLayersPanel(dialog.getContents());
+		panel.setMap(map);		
+		panel.setWidth(290);
+		panel.setHeight(350);
+		dialog.setWidth(300);
+		dialog.setHeight(450);
+		dialog.open();
+	</method>
+		
+	<method name="createMapOptionsDialog" args="parent, visor">
+		var dialog = new custommodaldialog(parent);
+		var panel = this.getMapOptionsPanel(dialog.getContents());
+		var cont = new mapoptionscontroller();
+		cont.setOptionsView(panel);
+		cont.setMap(visor.getMap());
+		panel.setMapVisor(visor);
+		panel.setWidth(350);
+		panel.setHeight(400);
+		dialog.setWidth(370);
+		dialog.setHeight(450);		
+		dialog.open();
+	</method>	
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

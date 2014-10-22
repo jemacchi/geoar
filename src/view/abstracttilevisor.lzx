@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="abstracttilevisor" extends="view">
+
+	<attribute name="tile" value="null" />
+	<attribute name="parentvisor" value="null" />
+	<attribute name="posx" value="null" />
+	<attribute name="posy" value="null" />
+	<attribute name="refs" value="${new Array()}" />
+	<event name="onsetmap" />
+	<event name="onnewbbox" />
+	<event name="ontilewidth" />
+	<event name="ontileheight" />
+	<event name="ontileover" />
+	<event name="onsettile" />
+	
+	<handler name="onheight">
+		this.ontileheight.sendEvent(this.height);
+	</handler>
+	
+	<handler name="onwidth">
+		this.ontilewidth.sendEvent(this.width);
+	</handler>
+	
+	<handler name="ontile">
+		this.onsettile.sendEvent();
+	</handler>	
+	
+	<method name="getPosx">
+		return posx;
+	</method>
+	
+	<method name="setPosx" args="i">
+		this.posx = i;
+	</method>
+	
+	<method name="getPosy">
+		return posy;
+	</method>
+	
+	<method name="setPosy" args="i">
+		this.posy = i;
+	</method>
+	
+	<method name="isActive">
+		return this.visible;
+	</method>
+	
+	<method name="drawTile" />
+	
+	<method name="getParentVisor">
+		return this.parentvisor;
+	</method>
+	
+	<method name="setParentVisor" args="visor">
+		this.parentvisor = visor;
+	</method>
+	
+	<method name="getTile">		
+		return this.tile;
+	</method>
+	
+	<method name="setTile" args="newtile">
+		this.setAttribute("tile",  newtile);
+	</method>
+	
+	<method name="getKey">
+		return new String(this.posy) + new String(posx);
+	</method>
+	
+	<method name="getReferencesViews">
+		return this.refs;
+	</method>
+	
+	<method name="retrieveBBox">
+		onnewbbox.sendEvent(this.calculateBBox());
+	</method>
+	
+	<method name="calculateBBox">
+	<![CDATA[
+		//Debug.write("CALCULATING BBOX");
+		var bbox = new boundingbox();
+		var cbbox = this.parentvisor.getCurrentBBox();
+		var tilewidth = this.parentvisor.getTileWidth();
+		var tileheight = this.parentvisor.getTileHeight();
+
+		bbox.setMinx(cbbox.getMinx() + this.posx*tilewidth);
+		bbox.setMaxx(bbox.getMinx() + tilewidth);
+
+		bbox.setMaxy(cbbox.getMaxy() - this.posy*tileheight);
+		bbox.setMiny(bbox.getMaxy() - tileheight);
+		bbox.setSrs(this.parentvisor.getMap().getCoordinateSystem());
+		
+		return bbox;		
+	]]>
+	</method>
+	
+	<method name="drawReference" args="ref" />
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

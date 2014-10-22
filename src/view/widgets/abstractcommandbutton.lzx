@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="abstractcommandbutton" extends="view" >
+	<attribute name="active" type="boolean" value="false" />
+	<attribute name="applicableobject" value="null" />
+	<attribute name="command" value="null" />
+	
+	<event name="onactivate" />
+	
+	<method name="isActive">
+		return this.active;
+	</method>
+	
+	<method name="setActive" args="a">
+		this.setAttribute("active", a);
+	</method>	
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

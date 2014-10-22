@@ -1,0 +1,3 @@
+Igual que demo1, pero agregando que:
+1) En una ventana(no view fijo) se despliegue el mapa de contexto (con mismo WMS fuente)
+2) En un view lateral al mapa (no una ventana) se visualice la informacion de las capas del mapa

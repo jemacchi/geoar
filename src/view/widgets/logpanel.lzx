@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="logpanel" extends="view">
+	<attribute name="x" value="${parent.x}" />
+
+	<method name="write" args="text">
+		this.logview.textview.logtext.setText(this.logview.textview.logtext.text + text+ "\n");
+	</method>
+	
+	<view name="logview" width="${parent.width}" height="${parent.height}" bgcolor="${parent.bgcolor}" clip="true">
+		<vscrollbar name="vscrollbar" visible="${this.scrollable}" />
+		<view name="textview">
+			<text name="logtext" width="${parent.parent.width - parent.parent.vscrollbar.width}"  text="" multiline="true" />
+		</view>
+	</view>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

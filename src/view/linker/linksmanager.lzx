@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="link.lzx" />
+<include href="handlers/movexvisoreventhandler.lzx" />
+<include href="handlers/moveyvisoreventhandler.lzx" />
+<include href="handlers/moverelxvisoreventhandler.lzx" />
+<include href="handlers/moverelyvisoreventhandler.lzx" />
+<include href="handlers/draggingeventhandler.lzx" />
+<include href="handlers/draggingselectedeventhandler.lzx" />
+<include href="handlers/adjustmapeventhandler.lzx" />
+<include href="handlers/movexselectedareaeventhandler.lzx" />
+<include href="handlers/moveyselectedareaeventhandler.lzx" />
+<include href="handlers/referencepositioneventhandler.lzx" />
+<include href="handlers/updatevisoreventhandler.lzx" />
+<include href="handlers/updatevisorbboxeventhandler.lzx" />
+<include href="constraints/linkconstraint.lzx" />
+
+<class name="linksmanager">
+	<attribute name="links" value="${new Array()}" />
+	
+	<method name="addLink" args="l">
+		this.links.push(l);
+	</method>
+	
+	<method name="disableAllSenderLinks" args="sender">
+		for (var i in this.links)
+			if (this.links[i].getSender() == sender)
+				this.links[i].disableLink();
+	</method>
+	
+	<method name="disableLink" args="sender, rec">
+		for (var i in this.links)
+			if (this.links[i].getSender() == sender)
+				if (this.links[i].getReceiver() == rec)
+					this.links[i].disableLink();
+	</method>
+	
+	<method name="disableLinks">
+	<![CDATA[
+		for (var i =0; i<this.links.length;i++)
+			this.links[i].forceDisable();
+	]]>
+	</method>
+
+	<method name="enableLinks">
+	<![CDATA[
+		for (var i =0; i<this.links.length;i++)
+			this.links[i].forceEnable();
+	]]>
+	</method>
+	
+	<method name="enableAllSenderLinks" args="sender">
+		for (var i in this.links)
+			if (this.links[i].getSender() == sender)
+				this.links[i].enableLink();
+	</method>
+	
+	<method name="enableLink" args="sender, rec">
+		for (var i in this.links)
+			if (this.links[i].getSender() == sender)
+				if (this.links[i].getReceiver() == rec)
+					this.links[i].enableLink();
+	</method>	
+	
+	<method name="getMovementLink" args="s, r">
+		var nlink = new link();
+		nlink.setSender(s);
+		nlink.setReceiver(r);
+		
+		nlink.addHandler(new movexvisoreventhandler());
+		nlink.addHandler(new moveyvisoreventhandler());
+		nlink.addHandler(new draggingeventhandler());
+		
+		return nlink;
+	</method>
+	
+	<method name="getRelativeMovementLink" args="s, r">
+		var nlink = new link();
+		nlink.setSender(s);
+		nlink.setReceiver(r);
+		
+		nlink.addHandler(new moverelxvisoreventhandler());
+		nlink.addHandler(new moverelyvisoreventhandler());
+		nlink.addHandler(new draggingeventhandler());
+		
+		return nlink;
+	</method>
+	
+	<method name="getDirectMovementLink" args="s,r">
+		var nlink = new link();
+		nlink.setSender(s);
+		nlink.setReceiver(r);
+		
+		nlink.addHandler(new movexvisoreventhandler());
+		nlink.addHandler(new moveyvisoreventhandler());
+		nlink.addHandler(new draggingeventhandler());
+		
+		return nlink;		
+	</method>
+	
+	<method name="getAdjustmentLink" args="s,r">
+		var adjlink = new link();
+		adjlink.setSender(s);
+		adjlink.setReceiver(r);
+		adjlink.addHandler(new adjustmapeventhandler());
+		
+		return adjlink;
+	</method>
+	
+	<method name="createCompleteMapLink" args="map1, map2">
+		var nlink = this.getDirectMovementLink(map1,map2);
+		var invlink = this.getDirectMovementLink(map2, map1);
+		
+		var lc = new linkconstraint();
+		// Se coloca el link inverso como constraint
+		lc.setLink(invlink);
+		// Se agrega el constraint al link correspondiente
+		nlink.addConstraint(lc);
+		
+		invlink.disableLink();
+		invlink.addEnablingEvent("onstartdrag");
+		//Para impedir en movimiento bi direccional cuando se hace el drag (en teoria solo se mueve uno)
+		invlink.addDisablingEvent("onstopdrag");	
+
+		var adjlink = this.getAdjustmentLink(map1, map2);
+		var adjinvlink = this.getAdjustmentLink(map2, map1);
+		
+		var adjlc = new linkconstraint();
+		adjlc.setLink(adjinvlink);
+		adjlink.addConstraint(adjlc);
+		
+		adjinvlink.disableLink();
+		adjinvlink.addEnablingEvent("onchangebbox");
+		adjinvlink.addDisablingEvent("onloaded");
+	
+		this.addLink(nlink);
+		this.addLink(invlink);
+		this.addLink(adjlink);
+		this.addLink(adjinvlink);
+	</method>
+	
+	<method name="createContextMapLink" args="map, contx, fixed">
+		var nlink = this.getRelativeMovementLink(map, contx);		
+		nlink.addDisablingEvent("onadjustbbox");
+		nlink.addEnablingEvent("onloaded");
+		
+		var enabledlink = new link();
+		enabledlink.setSender(map);
+		enabledlink.setReceiver(contx);
+		enabledlink.addHandler(new updatevisorbboxeventhandler());
+		enabledlink.addHandler(new draggingeventhandler());
+		
+		var invlink = new link();
+		invlink.setSender(contx);
+		invlink.setReceiver(map);
+		
+		invlink.addHandler(new updatevisoreventhandler());
+		invlink.addHandler(new movexselectedareaeventhandler());
+		invlink.addHandler(new moveyselectedareaeventhandler());
+		invlink.addHandler(new draggingselectedeventhandler());
+		//nlink.addHandler(new referencepositioneventhandler());		
+
+		if (!fixed){
+			var h = new eventhandler();
+			h.setMethodName("highlightArea");
+			h.addEventName("onchangevisorbbox");	
+			nlink.addHandler(h);
+			
+			nlink.addHandler(new adjustmapeventhandler());			
+		}
+
+		
+		var lc = new linkconstraint();
+		// Se coloca el link inverso como constraint
+		lc.setLink(invlink);
+		// Se agrega el constraint al link correspondiente
+		nlink.addConstraint(lc);
+		
+		// Se activa el link cuando se hace drag en el mapa de contexto y en el area resaltada, para que responda el constraint
+		//invlink.addEnablingEvent("onstartdrag");
+		//invlink.addDisablingEvent("onstopdrag");
+		invlink.addEnablingEvent("onstartdragselection");
+		invlink.addDisablingEvent("onstopdragselection");
+		
+		invlink.disableLink();
+		this.addLink(invlink);
+		this.addLink(nlink);
+		this.addLink(enabledlink);
+	</method>
+	
+	<method name="clearLinks">
+		
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="../../model/srs/coordinate.lzx" />
+<include href="../../model/srs/wgs84coordinate.lzx" />
+<include href="referenceview.lzx" />
+
+<class name="pointview" extends="referenceview" clip="true">
+	<event name="onreference" />
+	<event name="ondeselectreference" />
+	
+	<handler name="onreference">
+		new LzDelegate(this, "setSelected", this.reference, "onselect");
+		new LzDelegate(this, "showPoint", this.reference, "onactive");
+		new LzDelegate(this, "hidePoint", this.reference, "oninactive");
+		var url = this.reference.getIconUrl();
+
+		if (url)
+			this.iconimg.setAttribute("src", url);
+	</handler>
+	
+	<handler name="onmouseover">
+		//Debug.write("OVER POINT");
+		//Debug.write(this.reference);
+		this.bringToFront();
+	</handler>
+	
+	<handler name="onclick">
+		//Debug.write("ONCLICK POINT VIEW");
+
+		if (this.selectedview.visible)
+			this.onreferenceview.sendEvent(this); else
+			this.ondeselectreference.sendEvent();
+				
+	</handler>
+	
+	<method name="showPoint">
+		//Debug.write("SHOWING POINT");
+		this.iconimg.setVisible(true);
+	</method>
+	
+	<method name="hidePoint">
+		//Debug.write("HIDING POINT");
+		this.iconimg.setVisible(false);
+	</method>
+	
+	<method name="setPoint" args="p">
+		this.setAttribute("reference", p);
+	</method>
+	
+	<method name="getPoint">
+		return this.reference;
+	</method>
+	
+	<method name="setSelected" args="s">
+		this.selectedview.setVisible(s);
+	</method>
+	
+	<view name="selectedview" width="${parent.iconimg.width}" height="${parent.iconimg.height}" x="${parent.iconimg.x}" y="${parent.iconimg.y}" visible="false" bgcolor="0x5381ce" opacity="0.5">
+	</view>
+	
+	<image name="iconimg" src="" forcereload="true" showhandcursor="true">
+		<handler name="onload">
+		<![CDATA[
+			var newx = classroot.x - (this.width/2);
+			var newy = classroot.y - (this.height/2);
+			
+			if ((newx + this.width)> classroot.parent.width)
+				newx = classroot.parent.width - this.width; else
+					if (newx < 0)
+						newx = 0;			
+				
+			if ((newy + this.height)> classroot.parent.height)
+				newx = classroot.parent.height - this.height; else
+					if (newy < 0)
+						newy = 0;
+				
+			classroot.setAttribute("x", newx);
+			classroot.setAttribute("y", newy);
+		]]>
+		</handler>
+		<handler name="onclick">
+			classroot.setSelected(!classroot.selectedview.visible);
+			classroot.onclick.sendEvent();
+		</handler>
+		<handler name="onmouseover">
+			classroot.onmouseover.sendEvent();
+		</handler>
+	</image>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

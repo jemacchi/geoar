@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<canvas width="500" height="500" debug="true" proxied="false">
+    <debug x="0" y="0"/>
+    
+	<include href="../../view/wmsmapvisor.lzx" />
+	<include href="../../view/commands/dragcommand.lzx" />
+	<include href="../../view/commands/zoominselectioncommand.lzx" />
+	<include href="../../view/commands/zoomoutselectioncommand.lzx" />
+	<include href="../../utils/embeddedconfigurationmanager.lzx" />
+	<include href="../../utils/hashtable.lzx" />
+	<include href="../../view/widgets/imagecommandbutton.lzx" />
+	
+	<resource name="panresource">
+		<frame src="../../images/Pan-up.png" />
+		<frame src="../../images/Pan-over.png" />
+		<frame src="../../images/Pan-down.png" />
+	</resource>
+	
+	<resource name="zoominresource">
+		<frame src="../../images/ZoomIn-up.png" />
+		<frame src="../../images/ZoomIn-over.png" />
+		<frame src="../../images/ZoomIn-down.png" />
+	</resource>
+	
+	<resource name="zoomoutresource">
+		<frame src="../../images/ZoomOut-up.png" />
+		<frame src="../../images/ZoomOut-over.png" />
+		<frame src="../../images/ZoomOut-down.png" />
+	</resource>
+
+	<attribute name="visors" value="${new hashtable()}" />
+	<attribute name="buttons" value="${new Array()}" />
+    
+	<embeddedconfigurationmanager name="cmanager">
+		<dataset name="temp">
+			<mapconfs>
+				<mapconf name="main">
+					<defaultservers>
+						<server url="http://www2.demis.nl/mapserver/request.asp?" proxied="false">demis.nl</server>
+					</defaultservers>
+					<serverlist>
+						<server url="http://www2.demis.nl/mapserver/request.asp?" proxied="false">demis.nl</server>
+					</serverlist>
+					<defaultlocation srs="epsg4326">
+						<minlatitude>-41</minlatitude>
+						<minlongitude>-63</minlongitude>
+						<maxlatitude>-34</maxlatitude>
+						<maxlongitude>-56</maxlongitude>
+					</defaultlocation>
+					<maxlocation srs="epsg4326">
+						<minlatitude>-90</minlatitude>
+						<minlongitude>-180</minlongitude>
+						<maxlatitude>90</maxlatitude>
+						<maxlongitude>180</maxlongitude>
+					</maxlocation>
+				</mapconf>	
+			</mapconfs>	
+		</dataset>	
+		<handler name="oninit">
+			var pointer = temp.getPointer().dupePointer() ;
+			var mapconf = pointer.selectChild();
+			this.conf.appendChild(LzDataNode.stringToLzData(pointer.serialize()));
+		</handler>
+		<handler name="onconfigurationloaded">
+			<![CDATA[
+				var keys = canvas.visors.getKeys();
+				for (var i=0; i< keys.length; i++){
+					var conf =  this.getConfiguration(keys[i]);
+					conf.setMap(canvas.visors.get(keys[i]).getMap());	
+				}
+			]]>
+		</handler>
+	</embeddedconfigurationmanager>	
+	
+	<method name="addCommandButton" args="b">
+		this.buttons.push(b);
+		new LzDelegate(this, "deactivateButtons", b, "onactivate")
+	</method>	
+	
+	<method name="deactivateButtons" args="b">
+	<![CDATA[
+		for (var i=0; i<this.buttons.length;i++)
+			if (this.buttons[i] != b)
+				if (this.buttons[i].isActive())
+					this.buttons[i].setActive(false);
+	]]>
+	</method>
+
+	<view name="contents" width="${canvas.width}" height="${canvas.height}">
+	
+		<view name="mapview" height="${parent.height}" width="${parent.width}" >
+			<view name="buttonview" width="${parent.width}" height="${parent.height*0.03}"  y="10" >
+				<imagecommandbutton name="panview" resource="panresource" command="${new dragcommand(null, {visor: parent.parent.main })}" oninit="canvas.addCommandButton(this);this.setActive(true);"/>
+				<imagecommandbutton name="zoominview" resource="zoominresource" command="${new zoominselectioncommand(null, {visor: parent.parent.main })}" oninit="canvas.addCommandButton(this)"  />
+				<imagecommandbutton name="zoomoutview" resource="zoomoutresource" command="${new zoomoutselectioncommand(null, {visor: parent.parent.main })}" oninit="canvas.addCommandButton(this)"  />
+				<simplelayout axis="x" spacing="10" inset="10"/>
+			</view>
+			<wmsmapvisor name="main" height="${parent.height*0.8}" width="${parent.width*0.8}"  x="0" y="0" map="${this.getFactory().getNewMap()}" granularity="2" surGranularity="1" oninit="this.sendToBack()" >
+					<handler name="oninit">
+						canvas.visors.put(this.name, this);
+						canvas.cmanager.refreshConfiguration();
+					</handler>		
+			</wmsmapvisor>	
+		</view>
+	</view>
+
+</canvas>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

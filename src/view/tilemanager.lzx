@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="../model/boundingbox.lzx" />
+
+<class name="tilemanager">
+
+	<attribute name="currentvisibleno" value="0" type="number" />
+    <attribute name="createVisibleTileDel" value="null" />
+    <attribute name="visiblelayer" />
+    <attribute name="surroundinglayer" />
+	<attribute name="currentsurroundingno" value="0" type="number" />
+    <attribute name="createSurroundingTileDel" value="null" />
+
+    <method name="createVisibleTileViews" args="layer">
+    <![CDATA[
+		var mapvisor = layer.getMapVisor();
+	  	var gran = mapvisor.getGranularity();
+	  	var tileslength = Math.pow(gran,2);
+	  
+	  	this.visiblelayer = layer ;
+      	this.currentvisibleno = 0;
+      
+      	if (tileslength) {
+	        if (!this.createVisibleTileDel) {
+	          this.createVisibleTileDel = new LzDelegate(this, "createVisibleTile");
+	       }
+	       this.createVisibleTile();
+	    }
+	 ]]>
+    </method>
+    
+    <method name="createVisibleTile">
+    <![CDATA[
+        var layer = this.visiblelayer ;
+		var mapvisor = layer.getMapVisor();
+	  	var gran = mapvisor.getGranularity();
+	  	var tileslength = Math.pow(gran,2);
+		var mapref = mapvisor.getMap();
+		var factory = mapvisor.getFactory();
+		var refxindex = mapvisor.getTileXIndex(mapvisor.getCurrentX());
+		var refyindex = mapvisor.getTileYIndex(mapvisor.getCurrentY());	     
+      	
+      	var i = this.currentvisibleno ;
+      	
+      	var col= refxindex + i%gran;
+		var row= refyindex + parseInt(i/gran);
+					
+		if (!layer.isTileDrawn(col, row)){
+			var newtilevisor = factory.getNewTileVisor(layer);
+			var newtvcontroller = factory.getNewTileController();
+			newtvcontroller.setTileVisor(newtilevisor);
+		
+			newtilevisor.setPosx(col);
+			newtilevisor.setPosy(row);
+			newtilevisor.setAttribute('bgcolor', '0x325693');
+		
+			layer.insertTile(newtilevisor);
+			newtilevisor.onsetmap.sendEvent(mapref);
+		} 
+      	
+      	this.currentvisibleno++;
+      
+      	if (this.currentvisibleno < tileslength) {
+        	LzIdle.callOnIdle(this.createVisibleTileDel);
+      	}
+    ]]>
+    </method>
+    
+    <method name="createSurroundingTileViews" args="layer">
+	  	var mapvisor = layer.getMapVisor();
+		var gran= mapvisor.getGranularity();
+		var surgran = mapvisor.getSurroundingGranularity();
+		//El cuadro externo es de granularidad gran + 2*surgran (son sugran tiles de cada lado del cuadro visible)
+		var extgran = gran+ surgran*2;
+		var tileslength= Math.pow(extgran,2);
+
+		this.surroundinglayer = layer;
+      	this.currentsurroundingno = 0;
+      
+      	if (tileslength) {
+	        if (!this.createSurroundingTileDel) {
+	          this.createSurroundingTileDel = new LzDelegate(this, "createSurroundingTile");
+	       }
+	       this.createSurroundingTile();
+	    }
+    </method>
+    
+    <method name="createSurroundingTile">
+    <![CDATA[
+    	var layer = this.surroundinglayer ;
+		var mapvisor = layer.getMapVisor();
+		var gran= mapvisor.getGranularity();
+		var surgran = mapvisor.getSurroundingGranularity();
+		//El cuadro externo es de granularidad gran + 2*surgran (son sugran tiles de cada lado del cuadro visible)
+		var extgran = gran+ surgran*2;
+		var tileslength= Math.pow(extgran,2);
+		var mapref= mapvisor.getMap();
+		var factory = mapvisor.getFactory();
+		var refxindex = mapvisor.getTileXIndex(mapvisor.getCurrentX());
+		var refyindex = mapvisor.getTileYIndex(mapvisor.getCurrentY());		  
+      	
+      	var i = this.currentsurroundingno ;
+
+		var row= refyindex - 1 + parseInt(i/extgran);
+		var col= refxindex + (i%(extgran))-surgran;
+		
+		//Idem que con los tiles visibles, no redibujar
+		if (!layer.isTileDrawn(col,row)){
+			var newtilevisor = factory.getNewTileVisor(layer);
+			var newtvcontroller = factory.getNewTileController();
+			newtvcontroller.setTileVisor(newtilevisor);
+		
+			newtilevisor.setPosx(col);
+			newtilevisor.setPosy(row);
+			newtilevisor.setAttribute('bgcolor', '0xBAC4D5');
+		
+			layer.insertTile(newtilevisor);
+			newtilevisor.onsetmap.sendEvent(mapref);
+		}
+      	
+      	this.currentsurroundingno++;
+      
+      	if (this.currentsurroundingno < tileslength) {
+        	LzIdle.callOnIdle(this.createSurroundingTileDel);
+      	}
+    ]]>
+    </method>
+    
+	<!-- Metodo especifico creado por las limitaciones de laszlo para crear vistas dinamicamente. Se tiene que elegir el padre
+		al momento de la creacion de la vista, de otra manera, la vista se inserta en el canvas. -->
+	<method name="generateAndShowVisibleTiles" args="layer" >
+		this.createVisibleTileViews(layer);
+	</method>
+	
+	<!-- Similar al metodo generateAndShowVisibleTiles, a diferencia de que este tambien crea los tiles que rodean al area visible y los acomoda con
+		respecto a esta -->
+	<method name="generateAndShowTiles" args="layer" >
+	<![CDATA[
+		this.generateAndShowVisibleTiles(layer);
+		this.generateAndShowSurroundingTiles(layer);
+	]]>
+	</method>
+	
+	<method name="generateSurroundingTiles" args="mapvisor" >
+	</method>
+	
+	<method name="generateAndShowSurroundingTiles" args="layer">
+		this.createSurroundingTileViews(layer);
+	</method>
+
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

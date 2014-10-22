@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="reference">
+	<attribute name="refid" type="string" value="" />
+	<attribute name="type" type="string" value="abstract" />
+	<attribute name="reflayer" value="null" />
+	<attribute name="srs" value="null" />
+	<attribute name="object" value="null" />
+	
+	<event name="onactive" />
+	<event name="oninactive" />
+	
+	<method name="setSrs" args="c">
+		this.setAttribute('srs', c);
+	</method>
+	
+	<method name="getSrs">
+		return srs;
+	</method>
+
+	<method name="setReferenceLayer" args="l">
+		this.reflayer = l;
+		new LzDelegate(this, "oninactive.sendEvent", l, "oninactivelayer");
+		new LzDelegate(this, "onactive.sendEvent", l, "onactivelayer");
+	</method>
+
+	<method name="getReferenceId">
+		return this.refid;
+	</method>
+	
+	<method name="setReferenceId" args="rid">
+		this.refid = rid;
+	</method>
+	
+	<method name="getType">
+		return this.type
+	</method>
+	
+	<method name="setType" args="t">
+		this.type = t;
+	</method>
+	
+	<method name="setReferenceObject" args="obj">
+		this.object = obj;
+	</method>
+	
+	<method name="getReferenceObject">
+		return this.object;
+	</method>
+	
+	<method name="isInArea" args="bbox" />
+
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

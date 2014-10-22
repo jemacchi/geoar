@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<canvas width="800" height="800" debug="true" proxied="false">
+
+<include href="model/wmsfactory.lzx" />
+<include href="model/googlefactory.lzx" />
+<include href="model/maplogger.lzx" />
+<include href="view/wmsmapvisor.lzx" />
+<include href="view/googlemapvisor.lzx" />
+<include href="view/contextmapvisor.lzx" />
+<include href="view/commands/dragcommand.lzx" />
+<include href="view/commands/zoominselectioncommand.lzx" />
+<include href="view/commands/refreshcommand.lzx" />
+<include href="view/commands/clearcommand.lzx" />
+<include href="view/commands/extendedzoomoutcommand.lzx" />
+<include href="view/commands/zoomincommand.lzx" />
+<include href="view/commands/zoomoutcommand.lzx" />
+<include href="view/commands/mousewheelzoomcommand.lzx" />
+<include href="view/commands/showlogcommand.lzx" />
+<include href="view/commands/selectreferencescommand.lzx" />
+<include href="view/linker/linksmanager.lzx" />
+<include href="view/widgets/layerspanel.lzx" />
+<include href="view/linker/handlers/referenceeventhandler.lzx" />
+<include href="utils/fileconfigurationmanager.lzx" />
+
+	<attribute name="logger" value="${new maplogger()}"/>
+	<attribute name="visors" value="${new hashtable()}" />
+	
+	<linksmanager name="lmanager" />
+	<fileconfigurationmanager name="cmanager" oninit="this.setConfigurationFile('map_conf.xml')">
+		<handler name="onconfigurationloaded">
+			<![CDATA[
+				var keys = canvas.visors.getKeys();
+				for (var i=0; i< keys.length; i++){
+					Debug.write("CONFIGURATION FOR : " + keys[i]);
+					var conf =  this.getConfiguration(keys[i]);
+					//Debug.write(conf);
+					conf.setMap(canvas.visors.get(keys[i]).getMap());	
+				}
+			]]>
+		</handler>
+	</fileconfigurationmanager>	
+	
+		<!-- 
+	<googlemapvisor name="visor" width="${canvas.width}" height="${canvas.height*0.5}" map="${canvas.gfactory.getNewMap()}" granularity="2" surGranularity="1" maptype="s" >
+		<handler name="onlog">
+			//canvas.logger.setPanel(this.log);
+		</handler>
+		<handler name="onpos" args="pos">
+			coordx.setText(pos['x']);
+			coordy.setText(pos['y']);
+		</handler>
+	</googlemapvisor>
+-->
+
+	<googlemapvisor name="main" width="${canvas.width}" height="${canvas.height*0.5}" map="${this.getFactory().getNewMap()}" granularity="2" surGranularity="1" maptype="s">
+		<handler name="oninit">
+			canvas.visors.put(this.name, this);
+		</handler>
+		<handler name="onlog">
+			canvas.logger.setPanel(this.log);
+		</handler>
+		<handler name="onpos" args="pos">
+			coordx.setText(pos.getXCoord());
+			coordy.setText(pos.getYCoord());
+		</handler>
+	</googlemapvisor>
+
+	<window name="contextwin" width="300" height="300">
+		<wmsmapvisor name="context" height="${parent.height*0.7}" defaultzoomlevel="-2" width="${parent.width*0.7}" x="0" y="0" map="${this.getFactory().getNewMap()}" granularity="2" surGranularity="1" implicitLoading="true" oninit="this.setAttribute('alwaysdraggeable', true)" >
+			<handler name="oninit">
+				canvas.visors.put(this.name, this);
+			</handler>		
+		</wmsmapvisor>
+	</window>
+
+	<!-- 
+
+	<window name="layerswin" width="300" height="300" resizable="true" x="400">
+		<layerspanel name="layerspan" width="${parent.width}" height="${parent.height}" map="${canvas.visor.map}" />
+	</window>
+
+	<mapvisor name="visor2" width="${canvas.width*0.4}" height="${canvas.height*0.4}" map="${canvas.factory.getNewMap()}" granularity="3" surGranularity="1" >
+		<wmstilemanager name="tilemanager" />				
+	</mapvisor>	
+	 -->
+	<view name="info">
+		<text text="Coord X: "  />
+		<text id="coordx" text="" />
+		<text text="Coord Y: "  />
+		<text id="coordy" text="" />
+		<simplelayout axis="x"  spacing="3" />
+	</view>
+	
+	<view>
+	<button name="refreshbtn" text="Refresh" >
+		<attribute name="refreshcom" value="${new refreshcommand(null,{visor: canvas.main})}" />
+		<handler name="onclick">
+			this.refreshcom.execute();
+		</handler>
+	</button>
+	
+	<button name="clearbtn" text="Clear" >
+		<attribute name="clearcom" value="${new clearcommand(null,{visor: canvas.main})}" />
+		<handler name="onclick">
+			this.clearcom.execute();
+		</handler>
+	</button>
+	<simplelayout axis="x" spacing="5" />
+	</view>
+	
+	<view>
+	
+	<statictext name="zoomlevellabel" text="Zoom Level: "  />
+	<edittext name="zoomlevel" text="2" width="30" />
+	
+	<button name="zoomoutbtn" text="Zoom Out" >
+		<attribute name="zoomoutcom" value="${new zoomoutcommand(null,{visor: canvas.main})}" />
+		<handler name="onclick">
+			this.zoomoutcom.setZoomLevel(parseFloat(parent.zoomlevel.text));
+			this.zoomoutcom.execute();
+		</handler>
+	</button>
+	
+	<button name="zoomInbtn" text="Zoom In" >
+		<attribute name="zoomincom" value="${new zoomincommand(null,{visor: canvas.main})}" />
+		<handler name="onclick">
+			this.zoomincom.setZoomLevel(parseFloat(parent.zoomlevel.text));
+			this.zoomincom.execute();
+		</handler>
+	</button>
+	
+	<button name="extzoombtn" text="Extended Zoom out" >
+		<attribute name="zoomoutcom" value="${new extendedzoomoutcommand(null,{visor: canvas.main})}" />
+		<handler name="onclick">
+			this.zoomoutcom.execute();
+		</handler>
+	</button>
+	
+	<simplelayout axis="x" spacing="5" />
+	</view>
+	
+	<view name="otheroptsview">
+	<checkbox name="allowdrag" text="Allow Drag" value="true" >
+		<attribute name="dragcom" value="${new dragcommand(null,{visor: canvas.main})}" />
+		<handler name="onvalue">
+		<![CDATA[
+		
+			if ((this.value) && (typeof(parent.parent.extzoomopt)!="undefined"))
+				parent.parent.extzoomopt.allowzoom.setValue(false);
+				
+			if (this.dragcom== null)
+				return;
+
+			if (this.value)
+				this.dragcom.register(); else
+				this.dragcom.unregister();
+		]]>
+		</handler>
+		
+		<handler name="ondragcom">
+			if (this.value)
+				this.dragcom.register();
+		</handler>
+	</checkbox>
+	
+	<checkbox name="showlog" text="Show Log" value="false" >
+		<attribute name="showlogcom" value="${new showlogcommand(null,{visor: canvas.main})}" />
+		<handler name="onvalue">
+		<![CDATA[
+		
+			if (this.showlogcom== null)
+				return;
+
+			if (this.value)
+				this.showlogcom.register(); else
+				this.showlogcom.unregister();
+		]]>
+		</handler>
+		
+		<handler name="ondragcom">
+			if (this.value)
+				this.showlogcom.register();
+		</handler>
+	</checkbox>
+
+	<checkbox name="allowrefsel" text="Area Selection" value="false" >
+		<attribute name="selcom" value="${new selectreferencescommand(null,{visor: canvas.main})}" />
+		<handler name="onvalue">
+		<![CDATA[
+		
+			if (this.value)
+				parent.parent.otheroptsview.allowdrag.setValue(false);
+
+			if (this.selcom== null)
+				return;
+
+			if (this.value)
+				this.selcom.register(); else
+				this.selcom.unregister();
+		]]>
+		</handler>
+		
+		<handler name="onselcom">
+			if (this.value)
+				this.selcom.register();
+		</handler>
+	</checkbox>
+
+
+	<simplelayout axis="x" spacing="5" />
+	</view>
+	
+	<view name="extzoomopt">
+		<checkbox name="allowwheelzoom" text="Allow Mouse Wheel Zoom" value="false" >
+		<attribute name="zoomcom" value="${new mousewheelzoomcommand(null,{visor: canvas.main})}" />
+		<handler name="onvalue">
+		<![CDATA[
+			if (this.zoomcom == null)
+				return;
+
+			if (this.value)
+				this.zoomcom.register(); else
+				this.zoomcom.unregister();
+		]]>
+		</handler>
+		
+		<handler name="onzoomcom">
+			if (this.value)
+				this.zoomcom.register();
+		</handler>
+	</checkbox>
+
+	<checkbox name="allowzoom" text="Zoom Area Selection" value="false" >
+		<attribute name="zoomcom" value="${new zoominselectioncommand(null,{visor: canvas.main})}" />
+		<handler name="onvalue">
+		<![CDATA[
+		
+			if (this.value)
+				parent.parent.otheroptsview.allowdrag.setValue(false);
+
+			if (!this.zoomcom)
+				return;
+
+			if (this.value)
+				this.zoomcom.register(); else
+				this.zoomcom.unregister();
+		]]>
+		</handler>
+		
+		<handler name="onzoomcom">
+			if (this.value)
+				this.zoomcom.register();
+		</handler>
+	</checkbox>
+	<checkbox name="showarea" text="Show Area" value="false">
+		<handler name="onvalue">
+			if (!value)
+				return;
+			
+			canvas.contextwin.context.highlightWGS84Area(canvas.main.getWGS84VisibleBBox());
+		</handler>
+	</checkbox>
+	<checkbox name="linkmap" text="Link Maps" value="false">
+		<handler name="onvalue">
+			if (!value)
+				return;
+				
+			canvas.lmanager.createContextMapLink(canvas.main, canvas.contextwin.context, false);
+		</handler>
+	</checkbox>
+	<simplelayout axis="x" spacing="5" />
+	<simplelayout axis="x" spacing="5" />
+	</view>
+	
+	<text name="url" text="Texto" />
+	
+	<button text="Center" >
+		<handler name="onclick">
+			canvas.contextwin.context.getActiveLayer().setX(-157.5);
+			canvas.contextwin.context.getActiveLayer().setY(-15);
+		</handler>
+	</button>
+	
+	<handler name="oninit">
+		var l  = new link();
+		l.setSender(canvas.main);
+		l.setReceiver(canvas);
+		
+		l.addHandler(new referenceeventhandler());
+		Debug.write();
+	</handler>
+	
+	<method name="changeText" args="ref">
+		Debug.write("CHANGING TEXT");
+		this.url.setText(ref.getIconUrl());
+	</method>
+	
+	
+	<simplelayout axis="y" spacing="1" />
+
+</canvas>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

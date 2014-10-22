@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<library>
+
+<include href="tile.lzx" />
+<include href="../utils/stringutil.lzx" />
+
+<class name="wmstile" extends="tile">
+	<attribute name="transparent" type="boolean" value="false" />
+
+	<method name="getRequestQueryString">
+	<![CDATA[
+		if  (this.map == null)
+			return "";
+		
+		var layers = this.map.getSelectedLayers();
+			
+		var query = "";
+		var styles= "";
+		
+		query+= this.map.getServerUrl();
+		query+="LAYERS="	
+		
+		for(var i=0;i<layers.length;i++)
+			if (i==(layers.length-1))
+				query+=layers[i].getLayerName();else{
+				query+=layers[i].getLayerName() + ",";
+				styles+=",";
+				}
+				
+		query+="&FORMAT=" + this.map.getRequestFormat();
+		query+="&REQUEST=GetMap";
+		var trans = new String(this.transparent);
+		query+="&TRANSPARENT=" + trans.toUpperCase();
+		query+="&HEIGHT=" + this.tileheight;
+		query+="&WIDTH=" + this.tilewidth;
+		query+="&STYLES="+styles;
+		query+="&SRS="+ this.map.getCoordinateSystem().getSrsName();
+		query+="&VERSION="+this.map.getVersion();
+		query+="&BBOX="+this.bbox.getMinx()+","+this.bbox.getMiny()+","+this.bbox.getMaxx()+","+this.bbox.getMaxy();
+				
+		//Debug.write("REQUESTING...");
+		var su = new stringutil();
+		query = su.replace(query,' ','%20');
+		//Debug.write(query);
+		return query ;
+	]]>
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

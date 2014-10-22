@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="layerdescription.lzx" />
+<include href="treeadapter.lzx" />
+
+<class name="wmslayerdescription" extends="layerdescription" >
+
+	<method name="drawDescription">
+	<![CDATA[
+		super.drawDescription();		
+		var troot = new tree(this.getDescriptionView(), {name: "treeroot", autoscroll: true, showroot: false, focused: false});
+		var t = new treeadapter(troot, {text: "Opts", isleaf: false, icon: null });
+		
+		new tree(t, {text: "Opaque: " + this.layer.isOpaque(), isleaf: true} );
+		new tree(t, {text: "Queryable: " + this.layer.isQueryable(), isleaf: true} );	
+
+		var maxbbox = this.layer.getMaxBBox();
+		new tree(t, {text: "BoundingBox: " + '[(' +new String (parseFloat(maxbbox.minx)) + ', ' + new String (Math.round(maxbbox.miny)) + '), (' +new String (Math.round(maxbbox.maxx)) + ', ' + new String (Math.round(maxbbox.maxy)) + ')]', isleaf: true} );	
+		]]>
+	</method>
+
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

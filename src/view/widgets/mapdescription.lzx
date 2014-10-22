@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="mapdescription">
+	<attribute name="visor" value="null" />
+	<attribute name="fact" value="null" />
+	
+	<handler name="oninit">
+		if (this.visor)
+			this.onvisor.sendEvent();
+	</handler>
+	
+	<handler name="onvisor">	
+		this.fact = this.visor.getFactory();
+		this.mapdescview.mapname.setText(visor.getAttribute("name"));
+	</handler>
+	
+	<method name="setMapVisor" args="m">	
+		this.setAttribute("visor", m);
+	</method>
+	
+	<method name="setFactory" args="f">
+		this.fact = f;
+	</method>
+	
+	<view name="mapdescview" width="${parent.width}" bgcolor="blue">
+ 		<text name="mapname" text="" />
+ 		<button name="mapoptbtn" text="Map Options..." onclick="classroot.fact.createMapOptionsDialog(canvas, classroot.visor, classroot.fact)" />
+ 		<button name="laybtn" text="Layers..." onclick="classroot.fact.createLayersDialog(canvas, classroot.visor.getMap(), classroot.fact)" />
+ 		
+		<simplelayout axis="x" spacing="2" />
+	</view>
+
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="abstractcommand.lzx" />
+<include href="centeratcommand.lzx" />
+<include href="../../model/boundingbox.lzx" />
+
+<class name="locateatcommand" extends="abstractcommand">
+
+	<attribute name="lat" type="string" value="" />
+	<attribute name="lon" type="string" value="" />
+	<attribute name="level" type="string" value="" />
+	<attribute name="srs" />
+
+	<method name="execute">
+	<![CDATA[
+	    var ilat, ilon ;
+	    ilat = parseFloat(this.lat) ;
+     	ilon = parseFloat(this.lon) ;
+		var pfactor = 1 ; //1 grado son 113 kilometros
+	    var bbaux ;
+		switch(this.level){
+			case "address":	 bbaux = new boundingbox(null,{minx: (ilon-(pfactor*0.005)), miny: (ilat-(pfactor*0.05)), 
+				                                  maxx: (ilon+(pfactor*0.05)), maxy: (ilat+(pfactor*0.05)),srs: this.srs});
+				             break ;                   
+			case "street":	 bbaux = new boundingbox(null,{minx: (ilon-(pfactor*0.01)), miny: (ilat-(pfactor*0.1)), 
+				                                  maxx: (ilon+(pfactor*0.1)), maxy: (ilat+(pfactor*0.1)),srs: this.srs});
+				             break ;
+			case "zip+4":	 bbaux = new boundingbox(null,{minx: (ilon-(pfactor*0.08)), miny: (ilat-(pfactor*0.15)), 
+				                                  maxx: (ilon+(pfactor*0.15)), maxy: (ilat+(pfactor*0.15)),srs: this.srs});
+				             break ;
+			case "zip+2":	bbaux = new boundingbox(null,{minx: (ilon-(pfactor*0.1)), miny: (ilat-(pfactor*0.2)), 
+				                                  maxx: (ilon+(pfactor*0.2)), maxy: (ilat+(pfactor*0.2)),srs: this.srs});						                                  
+				            break ;
+			case "zip":	 bbaux = new boundingbox(null,{minx: (ilon-(pfactor*0.15)), miny: (ilat-(pfactor*0.25)), 
+				                                  maxx: (ilon+(pfactor*0.25)), maxy: (ilat+(pfactor*0.25)),srs: this.srs});							                                  
+				         break ;
+			case "city":	 bbaux = new boundingbox(null,{minx: (ilon-(pfactor*0.2)), miny: (ilat-(pfactor*0.5)), 
+				                                  maxx: (ilon+(pfactor*0.5)), maxy: (ilat+(pfactor*0.5)),srs: this.srs});							                                  
+				             break ;
+			case "state":	 bbaux = new boundingbox(null,{minx: (ilon-(pfactor*1)), miny: (ilat-(pfactor*1)), 
+				                                  maxx: (ilon+(pfactor*1)), maxy: (ilat+(pfactor*1)),srs: this.srs});							                                  
+				             break ;
+			case "country":	bbaux = new boundingbox(null,{minx: (ilon-(pfactor*10)), miny: (ilat-(pfactor*10)), 
+				                                  maxx: (ilon+(pfactor*10)), maxy: (ilat+(pfactor*10)),srs: this.srs});							                                  
+				            break ;
+		}
+		//Debug.write(bbaux);
+		//Debug.write(this.visor);
+		this.visor.changeBBox(bbaux); 
+		var cmd = new centeratcommand(null,{visor:this.visor,lat:this.lat,lon:this.lon}) ;
+		cmd.execute();
+	]]>	
+	</method>
+</class>
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="referencelayer">
+	<attribute name="references" value="${new Array()}" />
+	<attribute name="layername" type="string" value="" />
+	<attribute name="srsname" type="string" value="" />
+	
+	<event name="oninactivelayer" />
+	<event name="onactivelayer" />
+	
+	<method name="setLayerName" args="n">
+		this.layername = n;
+	</method>
+	
+	<method name="getLayerName">
+		return this.layername;
+	</method>
+	
+	<method name="setSrsName" args="n">
+		this.srsname = n;
+	</method>
+	
+	<method name="getSrsName">
+		return this.srsname;
+	</method>
+	
+	<method name="addReference" args="ref">
+		this.references.push(ref);
+	</method>
+	
+	<method name="getReferences">
+		return this.references;
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

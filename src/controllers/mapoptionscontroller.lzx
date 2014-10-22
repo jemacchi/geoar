@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="mapoptionscontroller">
+	<attribute name="optionsview" value="null" />
+	<attribute name="map" value="null" />
+	
+	<handler name="onoptionsview">
+		var delservers = new LzDelegate (this, "notifyUpdateServers", this.optionsview, "onupdateservers");
+		var delbbox = new LzDelegate(this, "notifyChangeBBox", this.optionsview, "onupdatebbox");
+	</handler>
+	
+	<method name="setMap" args="m" >
+		this.setAttribute("map", m);
+	</method>
+	
+	<method name="setOptionsView" args="v">
+		this.setAttribute("optionsview", v);
+	</method>
+	
+	<method name="notifyUpdateServers" args="servers">
+		if (!this.map)
+			return;
+			
+		this.map.setServers(servers);
+	</method>
+	
+	<method name="notifyChangeBBox" args="bbox">
+		if (!this.map)
+			return;
+
+		this.map.setCurrentBBox(bbox);
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="layer">
+
+	<attribute name="title" type="string" value="" />
+	<attribute name="layername" type="string" value="" />
+	<attribute name="selected" type="boolean" value="false" />
+	<attribute name="enabled" type="boolean" value="true" />
+	<attribute name="position" type="number" value="0" />
+	
+	<event name="onchangeselection" />
+	<event name="onlevelup" />
+	<event name="onleveldown" />
+	
+	<method name="getLayerName">
+		return this.layername;
+	</method>
+	
+	<method name="setLayerName" args="l">
+		this.layername = l;
+		//Debug.write(this.layername);
+	</method>	
+	
+	<method name="setSelected" args="s">
+		this.selected = s;
+		this.onchangeselection.sendEvent(this);
+	</method>
+	
+	<method name="isSelected">
+		if (!this.enabled)
+			return false;
+		
+		return this.selected;
+	</method>
+	
+	<method name="isEnabled">
+		return this.enabled;
+	</method>
+	
+	<method name="setEnabled" args="e">
+		this.enabled = e;
+	</method>
+	
+	<method name="getTitle">
+		return this.title;
+	</method>
+	
+	<method name="setTitle" args="newtitle">
+		this.title = newtitle;
+	</method>
+	
+	<method name="setPosition" args="p">
+		this.position = p;
+	</method>
+	
+	<method name="getPosition">
+		return this.position;
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,4 @@
+Esta demo es igual a la demo1 pero agrega un mapa de contexto sobre la esquina superior derecha
+fijo (no una ventana, sino un view que hasta podemos considerar un poco transparente)
+Ambos mapas muestran el WMS de Demis. Dado a que el mapa es de contexto, debera estar vinculado
+al mapa principal.

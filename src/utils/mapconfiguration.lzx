@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="../model/boundingbox.lzx" />
+
+<class name="mapconfiguration">
+	<attribute name="confname" type="string" value="" />
+	<attribute name="map" value="null" />
+	<attribute name="refurl" value="null" />
+	<attribute name="deflocation" value="null" />
+	<attribute name="maxlocation" value="null" />
+	<attribute name="defservers" value="${new Array()}" />
+	<attribute name="servers" value="${new Array()}" />
+	<attribute name="exclayers" value="${new Array()}" />
+	<attribute name="inclayers" value="${new Array()}" />
+	<attribute name="excludeall" type="boolean" value="false" />
+	
+	<method name="setConfigurationName" args="name">
+		this.confname  = name;
+	</method>
+	
+	<method name="getConfigurationName">
+		return this.confname;
+	</method>
+	
+	<method name="setMap" args ="map">
+	<![CDATA[
+		this.map = map;
+		
+		if (this.refurl)
+			this.map.setReferencesUrl(refurl);
+		
+		if (this.maxlocation)
+			this.map.setMaxBBox(this.maxlocation);
+		
+		//Debug.write("DEFAULT LOCATION: ");
+		//Debug.write(this.deflocation);
+		if (this.deflocation)
+			this.map.setCurrentBBox(this.deflocation);
+			
+		this.map.setExcludeAll(this.excludeall);
+			
+		for (var i=0;i<this.inclayers.length;i++)
+			this.map.includeLayer(inclayers[i]);
+			
+		for (var i=0;i<this.exclayers.length;i++)
+			this.map.excludeLayer(exclayers[i]);
+		
+		for (var i=0;i<this.defservers.length;i++)
+			this.map.addServer(this.defservers[i]);
+			
+		for (var i=0;i<this.servers.length;i++)
+			this.map.addSupportedServer(this.servers[i]);		
+	]]>
+	</method>
+	
+	<method name="setExcludeAll" args="b">
+		this.excludeall = b;
+		
+		if (this.map){
+			Debug.write("SETTING EXCLUDE: " + b);
+			this.map.setExcludeAll(b);
+		}
+	</method>
+	
+	<method name="addExcludedLayer" args="layer">
+		Debug.write("EXCLUDING LAYER: " + layer.getLayerName());
+		this.exclayers.push(layer);
+		
+		if (this.map)
+			this.map.excludeLayer(layer);
+	</method>
+	
+	<method name="addIncludedLayer" args="layer">
+		this.inclayers.push(layer);
+	
+		if (this.map)
+			this.map.includeLayer(layer);
+	</method>
+	
+	<method name="setReferencesUrl" args="url">
+		this.refurl = url;
+
+		if (this.map)
+			this.map.setReferencesUrl(url);
+	</method>
+	
+	<method name="getDefaultLocation">
+		return this.deflocation;
+	</method>
+	
+	<method name="setDefaultLocation" args="bbox">
+		this.deflocation = new boundingbox();
+		this.deflocation.minx = bbox.getMinx();
+		this.deflocation.maxx = bbox.getMaxx();
+		this.deflocation.miny = bbox.getMiny();
+		this.deflocation.maxy = bbox.getMaxy();
+		this.deflocation.srs = bbox.getSrs();
+		
+		if (this.map)
+			this.map.setCurrentBBox(this.deflocation);
+	</method>
+	
+	<method name="getMaxLocation">
+		return this.maxlocation;
+	</method>
+	
+	<method name="setMaxLocation" args="bbox">
+		this.maxlocation = new boundingbox();
+		this.maxlocation.minx = bbox.getMinx();
+		this.maxlocation.maxx = bbox.getMaxx();
+		this.maxlocation.miny = bbox.getMiny();
+		this.maxlocation.maxy = bbox.getMaxy();
+		this.maxlocation.srs = bbox.getSrs();
+		
+		if (this.map)
+			this.map.setMaxBBox(this.maxlocation);
+	</method>
+	
+	<method name="setDefaultMinx" args="minx">
+		this.deflocation.setMinx(minx);
+	</method>
+	
+	<method name="setDefaultMiny" args="miny">
+		this.deflocation.setMiny(miny);
+	</method>
+
+	<method name="setDefaultMaxx" args="maxx">
+		this.deflocation.setMaxx(maxx);
+	</method>
+
+	<method name="setDefaultMaxy" args="maxy">
+		this.deflocation.setMaxy(maxy);
+	</method>
+
+	<method name="addDefaultServer" args="s">
+		this.defservers.push(s);
+
+		if (this.map)
+			this.map.addServer(s);
+		
+		this.addServer(s);
+	</method>
+	
+	<method name="addServer" args="s">
+		this.servers.push(s);
+		
+		if (this.map)
+			this.map.addPossibleServer(s);		
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

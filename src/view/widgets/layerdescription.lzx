@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<resource name="dwbtnimage">
+	<frame src="../../images/Buttondown-up.png" />
+	<frame src="../../images/Buttondown-down.png" />
+	<frame src="../../images/Buttondown-over.png" />
+</resource>
+
+<resource name="upbtnimage">
+	<frame src="../../images/Buttonup-up.png" />
+	<frame src="../../images/Buttonup-down.png" />
+	<frame src="../../images/Buttonup-over.png" />
+</resource>
+
+<class name="layerdescription">
+	<attribute name="layer" value="null" />
+	<attribute name="textwidth" value="60" />
+			
+	<event name="onsetlayer" />
+	<event name="onuserselection" />
+	<event name="onlayerup" />
+	<event name="onlayerdown" />
+	
+	<handler name="onlayer">
+		this.drawDescription();
+	</handler>
+	
+	<method name="drawDescription">
+		this.onsetlayer.sendEvent();
+		this.layerdescview.selectedbox.setValue(this.layer.isSelected());
+		this.layerdescview.layernametext.setText(this.layer.getTitle());
+	</method>
+	
+	<method name="getLayer">
+		return this.layer;
+	</method>
+	
+	<method name="setLayer" args="l">
+		this.setAttribute("layer", l);
+	</method>
+	
+	<method name="getLayerName">
+		return this.layer.getTitle();
+	</method>
+	
+	<method name="getDescriptionView">
+		return this.layerdescview;
+	</method>
+
+	<view name="layerdescview" width="${parent.width}" >
+		<view name="dwbtn" resource="dwbtnimage" onclick="classroot.onlayerdown.sendEvent();" onmouseup="setResourceNumber(1)" onmousedown="setResourceNumber(2)" onmouseover="setResourceNumber(3)" />
+		<view name="upbtn" resource="upbtnimage" onclick="classroot.onlayerup.sendEvent();" onmouseup="setResourceNumber(1)" onmousedown="setResourceNumber(2)" onmouseover="setResourceNumber(3)" />
+ 
+ 		<text name="seltext" text="Selected" />
+		<checkbox name="selectedbox"  value="false">
+			<handler name="onclick">
+				classroot.onuserselection.sendEvent(this.value);
+			</handler>
+		</checkbox>
+		<text name="layernametext" text="" />
+		<simplelayout axis="x" spacing="2" />
+	</view>
+
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

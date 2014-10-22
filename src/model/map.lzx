@@ -1,0 +1,502 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="point.lzx" />
+<include href="referencelayer.lzx" />
+<include href="referenceobjects/referenceobjectmanager.lzx" />
+
+<class name="map">
+	<attribute name="currentbbox" value="null" />
+	<attribute name="defaultbbox" value="null" />
+	<attribute name="maxbbox" value="null" />
+	<attribute name="servers" value="${new hashtable()}" />
+	<attribute name="serverlist" value="${new hashtable()}" />
+	<attribute name="refUrl" type="string" value="" />
+	<attribute name="defaultsrs" type="string" value="null" />
+<!-- 	<attribute name="coordinateSystem" value="null" /> -->
+	<attribute name="mapname" type="string" value="" />
+	<attribute name="layers" value="${new Array()}" />
+	<attribute name="excludeall" type="boolean" value="false" />
+	<attribute name="includedlayers" value="${new hashtable()}" />
+	<attribute name="excludedlayers" value="${new hashtable()}" />
+	<attribute name="supportedlayers" value="${new Array()}" />
+	<attribute name="reflayers" value="${new hashtable()}" />
+	<attribute name="activereflayer" value="null" />
+	<attribute name="requested" type="boolean" value="false" />
+	<attribute name="accesses" type="number" value="0" />
+	<attribute name="refmanager" value="${new referenceobjectmanager()}" />
+	
+	<event name="onlimitsbbox" />
+	<event name="onsetbbox" />
+	<event name="onadjustbbox" />
+	<event name="onsrs" />
+	<event name="onaddsupportedlayer" />
+	<event name="onaddlayer" />
+	<event name="onmoveuplayer" />
+	<event name="onmovedownlayer" />
+	<event name="onchangereferencelayer" />
+	<event name="onserverurl" />
+	<event name="onupdateserverurl" />
+
+	<dataset name="refds" />
+	
+	<datapointer name="refdp" xpath="local:refds:/map">
+		<handler name="ondata">
+		<![CDATA[
+			//Debug.write("CREATING REF LAYERS");
+			var ls = this.xpathQuery("layer");
+			//Debug.write(ls);
+			if (ls instanceof LzDataElement)
+				ls = new Array(ls);
+			
+			var crs = classroot.getCoordinateSystem();
+			
+			// Si el sistema de coordenadas no esta seteado, utilizar el sistema por defecto, cuando llegue el srs, cambiarlo al bounding box
+			if (!crs)
+				crs = new srs();
+			
+			for (var i=0; i<ls.length; i++){
+				var rl = new referencelayer(null, {layername: ls[i].getAttr("name")});
+				var srsroot = ls[i].getElementsByTagName("srs");
+				
+				if (srsroot[0])
+					rl.setSrsName(srsroot[0].getAttr("name"));
+				
+				var refroot = ls[i].getElementsByTagName("references");
+				var refs = refroot[0].childNodes;
+				
+				for (var j=0; j<refs.length; j++){
+					var r;
+					switch (refs[j].nodeName){
+						case "point" : r = new point(null, {refid: refs[j].getAttr("id") ,iconurl: refs[j].getAttr("icon"), type: "point", srs: crs}); 
+													var coord = new coordinate();
+													coord.setXCoord(crs.WGS84LongToX(parseFloat(refs[j].getAttr("x"))));
+													coord.setYCoord(crs.WGS84LatToY(parseFloat(refs[j].getAttr("y"))));
+													r.setCoordinate(coord);
+													r.setReferenceLayer(rl);
+													break;
+					}
+					
+					if (refs[j].childNodes[0])
+						r.setReferenceObject(classroot.refmanager.getReferenceObject(refs[j].childNodes[0]));
+					
+					rl.addReference(r);
+				}
+				classroot.addReferenceLayer(rl);
+			}
+		]]>	
+		</handler>
+	</datapointer>
+	
+	<handler name="onserverurl">
+		this.layers = new Array();
+	</handler>
+	
+	<handler name="onrefUrl">
+		this.refds.setAttribute('src', this.getReferencesUrl());
+		//Debug.write("REF URL: " + this.getReferencesUrl());
+		this.refds.doRequest();
+	</handler>
+	
+	<method name="setReferenceObjectManager" args="r">
+		this.refmanager = r;
+	</method>
+	
+	<method name="getReferenceObjectManager">
+		return this.refmanager;
+	</method>
+	
+	<method name="addServer" args="server">
+		if (this.containsServer(server))
+			return;
+
+		this.servers.put(server.getServerName(), server);
+
+		if (this.servers.getLength() == 1)
+			this.onserverurl.sendEvent();
+			
+		if (!this.supportsServer(server))
+			this.addSupportedServer(server);
+	</method>
+	
+	<method name="setServers" args="servs">
+		this.servers = servs;
+		this.onserverurl.sendEvent();
+		this.requested = false;
+		this.onupdateserverurl.sendEvent();
+	</method>
+	
+	<method name="getServers">
+		return this.servers;
+	</method>
+	
+	<method name="removeServer" args="server">
+		if (this.servers.get(server.getServerName()))
+			this.servers.remove(server);
+	</method>
+	
+	<method name="containsServer" args="server">
+		if (this.servers.contains(server.getServerName()))
+			return true; else
+			return false;
+	</method>
+	
+	<method name="addSupportedServer" args="server">
+		this.serverlist.put(server.getServerName(), server);
+	</method>
+	
+	<method name="getSupportedServers">
+		return this.serverlist;
+	</method>
+	
+	<method name="supportsServer" args="server">
+	<![CDATA[
+		if (this.serverlist.contains(server.getServerName()))
+			return true; else
+			return false;
+	]]>
+	</method>
+	
+	<method name="setReferencesUrl" args="url">
+		this.setAttribute("refUrl", url);
+	</method>
+	
+	<method name="getReferencesUrl">
+		return this.refUrl; 
+	</method>
+	
+	<method name="isLoaded">
+	<![CDATA[
+		return ((this.requested) && (!this.servers.isEmpty()) && (this.currentbbox));
+	]]>
+	</method>
+
+	<method name="getCoordinateSystem">
+		return this.currentbbox.getSrs();
+	</method>
+
+	<method name="setCoordinateSystem" args="srs">
+		this.currentbbox.setSrs(srs);
+	</method>	
+
+	<method name="getDefaultCoordinateSystemName" >
+		return this.defaultsrs;
+	</method>
+	
+	<method name="setDefaultCoordinateSystemName" args="srs">
+		this.defaultsrs = srs.toLowerCase();
+	</method>
+				
+	<method name="getCurrentBBox">
+		return this.currentbbox;
+	</method>
+	
+	<method name="preprocessBBox" args="bbox">
+		//Debug.write(srs.getSrsName());
+		//Debug.write(bbox.getSrs().getSrsName());
+		
+		if (this.currentbbox){
+			var srs = this.currentbbox.getSrs();
+			if (srs.getSrsName() == bbox.getSrs().getSrsName())
+				return bbox.clone(); 
+			else {
+				//Debug.write(this);
+				//Debug.write("CONVERTING BBOX");
+				var oldsrs = bbox.getSrs();
+				var newbbox = new boundingbox();
+				
+				newbbox.setSrs(srs);			
+				//Debug.write("CONVERT: " + oldsrs.xToWGS84Long(bbox.minx) + " TO: " + srs.WGS84LongToX(oldsrs.xToWGS84Long(bbox.minx)) );
+				newbbox.setMinx(srs.WGS84LongToX(oldsrs.xToWGS84Long(bbox.minx)));
+				newbbox.setMaxx(srs.WGS84LongToX(oldsrs.xToWGS84Long(bbox.maxx)));
+				newbbox.setMiny(srs.WGS84LatToY(oldsrs.yToWGS84Lat(bbox.miny)));
+				newbbox.setMaxy(srs.WGS84LatToY(oldsrs.yToWGS84Lat(bbox.maxy)));
+				//Debug.write(newbbox);
+				return newbbox;
+				}
+		} else 
+			return bbox.clone();
+	</method>
+
+	<method name="correctBounds" args="newbbox">
+	<![CDATA[
+		var mapminx = this.maxbbox.getMinx();
+		var mapmaxx =this.maxbbox.getMaxx();
+		var mapminy = this.maxbbox.getMiny();
+		var mapmaxy = this.maxbbox.getMaxy();
+		var bbox = new boundingbox();
+		bbox.setSrs(newbbox.getSrs());
+		
+		if (newbbox.minx < mapminx ){
+			bbox.setMinx(mapminx);
+			if (newbbox.maxx < mapminx)
+				bbox.setMaxx(mapmaxx);
+		} else
+			bbox.setMinx(newbbox.getMinx());
+				
+		if (newbbox.maxx > mapmaxx ){
+			bbox.setMaxx(mapmaxx);
+			if (newbbox.minx > mapmaxx)
+				bbox.setMinx(mapminx);
+		} else
+			bbox.setMaxx(newbbox.getMaxx());
+							
+		if (newbbox.miny < mapminy ){
+			bbox.setMiny(mapminy);
+			if (newbbox.maxy < mapminy)
+				bbox.setMaxy(mapmaxy);
+		} else
+			bbox.setMiny(newbbox.getMiny());
+				
+		if (newbbox.maxy > mapmaxy ){
+			bbox.setMaxy(mapmaxy);
+			if (newbbox.miny > mapmaxy)
+				bbox.setMiny(mapminy);
+		} else
+			bbox.setMaxy(newbbox.getMaxy());
+		
+		return bbox;		
+	]]>
+	</method>
+
+	<method name="setCurrentBBox" args="bbox">
+		//Debug.write("SETTING CURRENT BBOX");
+		<![CDATA[
+		if ((this.currentbbox) && (this.currentbbox.equals(bbox)))
+			return;
+		]]>
+		this.currentbbox = this.correctBounds(this.preprocessBBox(bbox));
+		//Debug.write(this.currentbbox);
+		this.onsetbbox.sendEvent();
+	</method>
+	
+	<method name="getMaxBBox">
+		if (this.maxbbox)
+			return this.maxbbox; else
+			return this.srs.getMaxBBox();
+	</method>
+
+	<method name="setMaxBBox" args="bbox">
+		this.maxbbox = this.preprocessBBox(bbox);
+	</method>
+	
+	<method name="getDefaultBBox">
+		return this.defaultbbox;
+	</method>
+
+	<method name="setDefaultBBox" args="bbox">
+		this.defaultbbox = bbox;
+	</method>
+	
+	<method name="adjustBBox" args="bbox">
+		
+		//Debug.write("MINX: " + this.coordinateSystem.xToWGS84Long(bbox.minx) );
+		//Debug.write("MAXX: " + this.coordinateSystem.xToWGS84Long(bbox.maxx) );
+		//Debug.write("MINY: " + this.coordinateSystem.yToWGS84Lat(bbox.miny) );
+		//Debug.write("MAXY: " + this.coordinateSystem.yToWGS84Lat(bbox.maxy) );
+		
+		this.currentbbox = bbox;
+
+		if (this.defaultbbox==null)
+			this.defaultbbox = this.currentbbox;
+			
+		//Debug.inspect(bbox);
+		this.onadjustbbox.sendEvent();
+	</method>
+	
+	<method name="getMapName">
+		return this.mapname;
+	</method>
+	
+	<method name="setMapName" args="name">
+		this.mapname=name;
+	</method>
+	
+	<method name="getNextServer">
+	<![CDATA[
+		var acc = this.accesses % this.servers.getLength();
+		this.accesses++;
+		//Debug.write("ACCESS: " + acc);
+		var values = this.servers.getValues();		
+		
+		for (var i in values)
+			if (acc==0)
+				return values[i]; else
+				acc--;
+	]]>
+	</method>
+	
+	<method name="getServerUrl">
+		var server = this.getNextServer();
+		//Debug.write(server.isProxied());
+		if (!server.isProxied())
+			return server.getUrl(); else
+			return server.getProxiedUrl();
+	</method>
+	
+	<method name="getLayers">
+		return this.layers;
+	</method>
+
+	<method name="getSupportedLayers">
+		return this.supportedlayers;
+	</method>
+	
+	<method name="getSelectedLayers">
+	<![CDATA[
+		// Cuidado que el orden de las capas es muy importante
+		var sellayers = new Array();
+		for (var i=0; i< this.layers.length; i++)
+			if (this.layers[i].isSelected())
+				sellayers.push(this.layers[i]);
+		
+		return sellayers;	
+	]]>
+	</method>
+	
+	<method name="addSupportedLayer" args="layer">
+	<![CDATA[
+		this.supportedlayers.push(layer);
+		new LzDelegate(this, "layerSelectionChanged", layer, "onchangeselection");
+		new LzDelegate(this, "moveUpLayer", layer, "onlevelup");
+		new LzDelegate(this, "moveDownLayer", layer, "onleveldown");
+				
+		if ((this.excludeall) && (this.includedlayers.contains(layer.getLayerName())))
+			this.addLayer(layer); else
+			this.onaddsupportedlayer.sendEvent(layer);
+		
+		if ((!this.excludeall) && (!this.excludedlayers.contains(layer.getLayerName())))
+			this.addLayer(layer);
+			this.onaddsupportedlayer.sendEvent(layer);
+	]]>
+	</method>
+	
+	<method name="isExcludeAll">
+		return this.excludeall;
+	</method>
+	
+	<method name="setExcludeAll" args="b">
+		this.excludeall = b;
+	</method>
+	
+	<method name="includeLayer" args="layer">
+		this.includedlayers.put(layer.getLayerName(), layer);
+	</method>
+	
+	<method name="excludeLayer" args="layer">
+		this.excludedlayers.put(layer.getLayerName(), layer);
+	</method>
+	
+	<method name="addLayer" args="layer">
+		layer.setPosition(this.layers.length);
+		layer.selected = true;
+		this.layers.push(layer);
+		this.onaddlayer.sendEvent(layer);
+	</method>
+	
+	<method name="layerSelectionChanged" args="layer">
+		var i = this.containsLayer(layer);
+		//Se agrega a las capas si es soportada y no se encontraba actualmente en el conjunto de capas (para casos en los que se desee incluir capas en ejecucion)
+		if (i!=-1)
+			this.addLayer(layer);
+	</method>
+	
+	<!-- Devuelve el indice si la capa existe, de lo contrario devuelve -1 -->
+	<method name="containsLayer" args="layer">
+	<![CDATA[
+			for (var i=0; i<this.layers.length;i++)
+				if (this.layers[i].getTitle() == layer.getTitle())
+					return i;
+			
+			return -1;
+	]]>
+	</method>
+	
+	<method name="moveUpLayer" args="i">
+	<![CDATA[
+		if (i!=0){
+			var swap = this.layers[i-1];
+			this.layers[i-1] = this.layers[i];
+			this.layers[i] = swap;
+			this.layers[i-1].setPosition(i-1);
+			this.layers[i].setPosition(i);
+			this.onmoveuplayer.sendEvent(this.layers[i-1]);
+		} 
+	]]>
+	</method>
+	
+	<method name="moveDownLayer" args="i">
+	<![CDATA[
+		if (i!=(this.layers.length-1)){
+			var swap = this.layers[i+1];
+			this.layers[i+1] = this.layers[i];
+			this.layers[i] = swap;
+			this.layers[i+1].setPosition(i+1);
+			this.layers[i].setPosition(i);			
+			this.onmovedownlayer.sendEvent(this.layers[i+1]);
+		} 
+	]]>
+	</method>
+	
+	<method name="addReferenceLayer" args="l">
+		this.reflayers.put(l.getLayerName(), l);
+
+		if (!this.activereflayer)
+			this.changeActiveReferenceLayer(l.getLayerName());
+	</method>
+	
+	<method name="getReferenceLayer" args="name">
+		return this.reflayers.get(name);
+	</method>
+	
+	<method name="changeActiveReferenceLayer" args="lname">
+		if (this.reflayers.get(lname)){
+			if (this.activereflayer)
+				this.activereflayer.oninactivelayer.sendEvent();
+			this.activereflayer = this.reflayers.get(lname);
+			
+			this.activereflayer.onactivelayer.sendEvent();
+			this.onchangereferencelayer.sendEvent();
+			}
+	</method>
+	
+	<method name="getActiveReferenceLayer">
+		return this.activereflayer;
+	</method>
+	
+	<method name="moveBBox" args="relx, rely">
+		//Debug.write("X MOVEMENT: " + relx);
+		//Debug.write("Y MOVEMENT: " + rely);
+		this.currentbbox.setMinx(this.currentbbox.getMinx() + relx);
+		this.currentbbox.setMaxx(this.currentbbox.getMaxx() + relx);
+		this.currentbbox.setMiny(this.currentbbox.getMiny() + rely);
+		this.currentbbox.setMaxy(this.currentbbox.getMaxy() + rely);
+		//Debug.write(this.currentbbox);
+		this.onlimitsbbox.sendEvent();
+	</method>
+	
+	<!-- 
+	<method name="changeBBox" args="minx, miny, maxx, maxy">
+		this.currentbbox.setMinx(minx);
+		this.currentbbox.setMaxx(maxx);
+		this.currentbbox.setMiny(miny);
+		this.currentbbox.setMaxy(maxy);
+		this.onlimitsbbox.sendEvent();
+	</method>
+	 -->
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

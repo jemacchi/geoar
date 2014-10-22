@@ -1,0 +1,4 @@
+Esta demo se comporta como la demo1 con la diferencia que debe dibujar una capa de puntos (xml de puntos),
+que al ser seleccionados (via click) deben hacer que se abra una imagen sobre la esquina inferior 
+del visor del mapa (o bien que sobre una ventana abra una imagen de una url X, que debe ser 
+sacada de los datos asociados a los puntos del xml).

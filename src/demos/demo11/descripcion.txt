@@ -1,0 +1,6 @@
+Esta demo muestra un visor de mapa relacionado al servicio WMS de Demis, en donde se pueden
+usar las herramientas de Pan, Zoom In y Zoom Out (por seleccion de area)
+Basicamente la pantalla muestra el mapa inicializado en la provincia de Buenos Aires, y tres
+botones para activar los comandos (sacados de los recursos de la version 0.2.0 de Geoar) que estan sobre la esquina superior
+del mapa).
+Es igual a la demo1 pero mantiene el dataset de configuracion dentro del SWF generado.

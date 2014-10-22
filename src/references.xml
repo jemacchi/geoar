@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<map name="x">
+	<layer name="test" type="points">
+		<srs name="EPGS:4356"/>
+		<references>
+			<point id="1" x="-59.9" y="-35.88" icon="images/pin.png">
+		    </point> 
+		    <point id="2" x="-67.5" y="-37.46" icon="images/pin.png">
+		    </point>
+		    <point id="3" x="-59.139" y="-37.32" icon="images/pin.png">
+		    </point>
+		</references>
+	</layer> 
+</map> 

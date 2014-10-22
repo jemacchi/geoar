@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<canvas width="700" height="700" debug="false" proxied="false">
+
+<include href="../../view/wmsmapvisor.lzx" />
+<include href="../../view/googlemapvisor.lzx" />
+<include href="../../view/commands/dragcommand.lzx" />
+<include href="../../view/commands/zoominselectioncommand.lzx" />
+<include href="../../view/commands/zoomoutselectioncommand.lzx" />
+<include href="../../utils/fileconfigurationmanager.lzx" />
+<include href="../../utils/hashtable.lzx" />
+<include href="../../view/widgets/imagecommandbutton.lzx" />
+<include href="../../view/linker/linksmanager.lzx" />
+
+<resource name="panresource">
+	<frame src="../../images/Pan-up.png" />
+	<frame src="../../images/Pan-over.png" />
+	<frame src="../../images/Pan-down.png" />
+</resource>
+
+<resource name="zoominresource">
+	<frame src="../../images/ZoomIn-up.png" />
+	<frame src="../../images/ZoomIn-over.png" />
+	<frame src="../../images/ZoomIn-down.png" />
+</resource>
+
+<resource name="zoomoutresource">
+	<frame src="../../images/ZoomOut-up.png" />
+	<frame src="../../images/ZoomOut-over.png" />
+	<frame src="../../images/ZoomOut-down.png" />
+</resource>
+
+	<attribute name="visors" value="${new hashtable()}" />
+	<attribute name="buttons" value="${new Array()}" />
+
+	<fileconfigurationmanager name="cmanager" oninit="this.setConfigurationFile('map_conf.xml')">
+		<handler name="onconfigurationloaded">
+			<![CDATA[
+				var keys = canvas.visors.getKeys();
+				for (var i=0; i< keys.length; i++){
+					var conf =  this.getConfiguration(keys[i]);
+					conf.setMap(canvas.visors.get(keys[i]).getMap());	
+				}
+			]]>
+		</handler>
+	</fileconfigurationmanager>
+	
+	<linksmanager name="lmanager" />
+	
+	<method name="addCommandButton" args="b">
+		this.buttons.push(b);
+		new LzDelegate(this, "deactivateButtons", b, "onactivate")
+	</method>	
+	
+	<method name="deactivateButtons" args="b">
+	<![CDATA[
+		for (var i=0; i<this.buttons.length;i++)
+			if (this.buttons[i] != b)
+				if (this.buttons[i].isActive())
+					this.buttons[i].setActive(false);
+	]]>
+	</method>
+
+	<view name="contents" width="${canvas.width}" height="${canvas.height}">
+	
+		<view name="mapview" height="${parent.height}" width="${parent.width}" >
+			<view name="buttonview" width="${parent.width}" height="${parent.height*0.03}"  y="10" oninit="this.bringToFront();">
+				<imagecommandbutton name="panview" resource="panresource" command="${new dragcommand(null, {visor: parent.parent.main })}" oninit="canvas.addCommandButton(this)"  />
+				<imagecommandbutton name="zoominview" resource="zoominresource" command="${new zoominselectioncommand(null, {visor: parent.parent.main })}" oninit="canvas.addCommandButton(this)"  />
+				<imagecommandbutton name="zoomoutview" resource="zoomoutresource" command="${new zoomoutselectioncommand(null, {visor: parent.parent.main })}" oninit="canvas.addCommandButton(this)"  />
+				<simplelayout axis="x" spacing="10" />
+			</view>
+			<googlemapvisor name="main" height="${parent.height}" width="${parent.width}"  x="0" y="0" map="${this.getFactory().getNewMap()}" granularity="2" surGranularity="1" oninit="this.sendToBack()" maptype="s">
+					<handler name="oninit">
+						canvas.visors.put(this.name, this);
+					</handler>		
+			</googlemapvisor>	
+			<view name="contextview" height="${parent.height*0.3}" width="${parent.width*0.3}" valign="top" align="right">
+				<wmsmapvisor name="context" defaultzoomlevel="-4" width="${parent.width}" height="${parent.height}" map="${this.getFactory().getNewMap()}" granularity="2" surGranularity="1">
+						<handler name="oninit">
+							canvas.visors.put(this.name, this);
+						</handler>
+				</wmsmapvisor>	
+			</view>
+		</view>
+	</view>
+	
+	<handler name="oninit">
+		this.lmanager.createContextMapLink(this.contents.mapview.main, this.contents.mapview.contextview.context, false);
+	</handler>
+
+</canvas>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

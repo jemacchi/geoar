@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>geoar</name>
+	<comment>Cliente Lazslo para visualizacion geografica</comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.laszlo.rct.builder.rctbuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.laszlo.rct.builder.RCTNature</nature>
+	</natures>
+</projectDescription>

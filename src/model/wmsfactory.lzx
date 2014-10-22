@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="factory.lzx" />
+<include href="wmsmap.lzx" />
+<include href="wmstile.lzx" />
+<include href="wmslayer.lzx" />
+<include href="../view/wmstilevisor.lzx" />
+<include href="../view/widgets/wmslayerdescription.lzx" />
+<include href="../controllers/wmstilecontroller.lzx" />
+
+<class name="wmsfactory" extends="factory">
+
+	<method name="getNewTileVisor" args="parentview">
+		var newtilevisor = new wmstilevisor(parentview);
+		newtilevisor.setTile(this.getNewTile());
+		return newtilevisor;
+	</method>
+
+	<method name="getNewTileController">
+		return new wmstilecontroller();
+	</method>
+	
+	<method name="getNewMap">
+		return new wmsmap();
+	</method>
+	
+	<method name="getNewTile">
+		return new wmstile();
+	</method>
+	
+	<method name="getNewWMSLayer">
+		return wmslayer();
+	</method>	
+	
+	<method name="getLayerDescription" args="parent">
+		return new wmslayerdescription(parent);
+	</method>
+	
+	<method name="getLayersPanel" args="parent">
+		var panel = new layerspanel(parent);
+		panel.setFactory(new wmsfactory());
+		return panel;
+	</method>
+	
+	<method name="getMapOptionsPanel" args="parent">
+		var panel = new mapoptionspanel(parent);
+		panel.setFactory(new wmsfactory());
+		return panel;
+	</method>
+
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

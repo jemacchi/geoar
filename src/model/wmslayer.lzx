@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<library>
+
+<include href="layer.lzx" />
+<include href="attributedescription.lzx" />
+
+<class name="wmslayer" extends="layer">
+	<attribute name="maxbbox" value="null" />
+	<attribute name="opaque" type="boolean" value="false" />
+	<attribute name="queryable" type="boolean" value="false" />
+	<attribute name="capname" type="string" value="" />
+	<attribute name="supportedstyles" value="${new Array()}" />
+	<attribute name="style" value="null" />
+	
+	<method name="addSupportedStyle" args="s">
+		this.supportedstyles.push(s);
+	</method>
+	
+	<method name="removeSupportedStyle" args="s">
+	<![CDATA[
+		for (var i=0;i<this.supportedstyles.length;i++)
+			if (this.supportedstyles[i].getStyleName() == s.getName())
+				if (i!=0)
+					this.supportedstyles[i] = this.supportedstyles.pop(); else
+					this.supportedstyles[i].pop();
+	]]>
+	</method>
+	
+	<method name="getCapabilityName">
+		return this.layername;
+	</method>
+	
+	<method name="setCapabilityName" args="newname">
+		this.layername = newname;
+	</method>
+	
+	<method name="getMaxBBox">
+		return this.maxbbox;
+	</method>
+	
+	<method name="setMaxBBox" args="newbbox">
+		this.maxbbox = newbbox;
+	</method>
+	
+	<method name="isOpaque">
+		return this.opaque;
+	</method>
+	
+	<method name="setOpaque" args="isopaque">
+		this.opaque = isopaque;
+	</method>
+
+	<method name="isQueryable">
+		return this.queryable;
+	</method>
+	
+	<method name="setQueryable" args="isquery">
+		this.queryable = isquery;
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="map.lzx" />
+<include href="srs/epsg4326srs.lzx" />
+<include href="boundingbox.lzx" />
+<include href="wmslayer.lzx" />
+<include href="wmslayerstyle.lzx" />
+
+<class name="wmsmap" extends="map">
+	<attribute name="requestFormat" type="string" value="image/jpeg" />
+	<attribute name="version" type="string" value="" />
+	<attribute name="capabilities" value="${new Array()}" />
+	
+	<dataset name="wmsmapreq" type="http" nsprefix="true">
+		<attribute name="requests" type="number" value="0" />
+		<handler name="ontimeout">
+			this.requests++;
+			//Debug.write("TIMEOUT REQUESTING MAP... " + this.requests);
+		</handler>
+		<handler name="onerror">
+			this.requests++;
+			//Debug.write("ERROR REQUESTING MAP... " + this.requests);			
+		</handler>
+	</dataset>
+	
+	<datapointer name="wmsrootdp" xpath="local:wmsmapreq:/WMT_MS_Capabilities">
+		<handler name="ondata">
+			Debug.write('GetCapabilities');
+		    //Debug.write(this);
+			classroot.version = this.p.getAttr("version");
+		</handler>
+	</datapointer>
+	
+	<datapointer name="layerdp" xpath="local:wmsmapreq:/WMT_MS_Capabilities/Capability/Layer" >
+		<handler name="ondata">
+		<![CDATA[
+			var nodes = this.p.childNodes;
+		
+			var name = this.xpathQuery("Name");
+			if (name)
+				classroot.setMapName(name.childNodes[0].data);
+			
+			var defsrs = classroot.getDefaultCoordinateSystemName();
+			var srs = null;
+			var srss = this.xpathQuery("SRS");
+			var crss = this.xpathQuery("CRS");
+			
+			if (srss instanceof LzDataElement){
+				srss = new Array(srss);
+			}
+			
+			if (crss instanceof LzDataElement)
+				srss.push(crss); else
+				if (crss!= null)
+					srss = srss.concat(crss);
+
+			// Si el srs es igual al por defecto
+			for (var i=0; i<srss.length;i++)
+				if (srss[i].childNodes[0].data.toLowerCase() == defsrs )
+					srs = srss[i].childNodes[0].data;
+			
+			// Si no esta el por defecto, se toma el primero (decision por implementacion)
+			if (!srs)
+				srs = srss[0].childNodes[0].data;
+			
+			switch(srs.toLowerCase()) {
+				case "epsg:4326" : classroot.setCoordinateSystem(new epsg4326srs()); break;
+			}
+			
+			var bb = this.xpathQuery("BoundingBox[@SRS='" +srs + "']");	
+					
+			if (bb){
+				var cs = classroot.getCoordinateSystem();
+				//Debug.write(cs);
+				cs.setMaxBBox(new boundingbox(null, {minx: bb.getAttr('minx'), miny: bb.getAttr('miny'), maxx: bb.getAttr('maxx'), maxy: bb.getAttr('maxy') }));					
+			}
+			
+			var layers = this.xpathQuery("Layer");
+			
+			if (layers instanceof LzNode)
+				layers = new Array(layers);
+			
+			for (var i=0;i<layers.length;++i){
+				var node = layers[i];
+				var layer = new wmslayer(null, {queryable: node.getAttr("queryable")==1, opaque: node.getAttr("opaque")==1, selected:false});
+				for (var j=0; j<node.childNodes.length;j++){
+					var layernode = node.childNodes[j];
+					
+					if (layernode.nodeName == "Style"){
+						var st = new wmslayerstyle();
+						
+						for (var j=0;j<layernode.childNodes.length;j++)
+							if (layernode.childNodes[j].nodeName.toLowerCase() == "title" )
+								st.setTitle(layernode.childNodes[j].childNodes[0].data); else
+							if (layernode.childNodes[j].nodeName.toLowerCase() == "name" )
+								st.setStyleName(layernode.childNodes[j].childNodes[0].data);
+								
+						layer.addSupportedStyle(st);
+					}
+
+					if (layernode.nodeName == "Name")
+						layer.setLayerName(layernode.childNodes[0].data);
+						
+					if (layernode.nodeName == "Title")
+						layer.setTitle(layernode.childNodes[0].data);						
+					
+					if (layernode.nodeName == "BoundingBox")
+						layer.setMaxBBox(new boundingbox(null, {minx: layernode.getAttr('minx'), miny: layernode.getAttr('miny'), maxx: layernode.getAttr('maxx'), maxy: layernode.getAttr('maxy'), srs: classroot.getCoordinateSystem() }));
+				}				
+					
+				classroot.addSupportedLayer(layer);
+			}
+			
+		classroot.requested = true;
+		]]>	
+		</handler>
+	</datapointer>
+	
+	<handler name="onserverurl">
+	<![CDATA[
+		var req = this.getServerUrl() + 'service=WMS&request=GetCapabilities';
+
+		if (this.version!="")
+			req += "&version=" + this.version;
+			
+		//Debug.write(req);
+			
+		this.wmsmapreq.setAttribute('src', req);
+		this.wmsmapreq.setQueryType("GET");
+		this.wmsmapreq.doRequest();
+	]]>
+	</handler>
+	
+	<method name="getRequestFormat">
+		return this.requestFormat;
+	</method>
+	
+	<method name="getVersion">
+		return this.version;
+	</method>
+	
+	<method name="setVersion" args="v">
+		this.version = v;
+	</method>
+	
+	<method name="getCapabilities">
+		return this.capabilities;
+	</method>
+	
+	<method name="addCapability" args="cap">
+		this.capabilities.push(cap);
+	</method>
+	
+	<method name="setServers" args="servs">
+		if (servs.length != this.servers.length){
+			this.servers = servs;
+			this.onserverurl.sendEvent();
+			this.requested = false;
+			this.onupdateserverurl.sendEvent();
+		} else {
+			var values = servs.getValues();
+			
+			for (i in values)
+				if (!this.servers.contains(values[i])){
+					this.servers = servs;
+					this.onserverurl.sendEvent();
+					this.requested = false;
+					this.onupdateserverurl.sendEvent();
+					return;					
+				}					
+		}
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

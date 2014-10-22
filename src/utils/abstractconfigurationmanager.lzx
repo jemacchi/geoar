@@ -1,0 +1,195 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="hashtable.lzx" />
+<include href="mapconfiguration.lzx" />
+<include href="wmsmapconfiguration.lzx" />
+<include href="../model/mapserver.lzx" />
+<include href="../model/srs/mercatorsrs.lzx" />
+<include href="../model/srs/epsg4326srs.lzx" />
+
+<class name="abstractconfigurationmanager">
+	<attribute name="filename" type="string" value="" />
+	<attribute name="configurations" />
+		
+	<event name="onconfigurationloaded" />
+	
+	<handler name="onfilename">
+	</handler>
+	
+	<method name="setConfigurationFile" args="f">
+			this.setAttribute("filename", f);
+	</method>
+		
+	<method name="addConfiguration" args="c">
+	    if (!this.configurations)
+	    	this.configurations = new hashtable() ;
+		this.configurations.put(c.getConfigurationName(), c);
+	</method>
+	
+	<method name="getConfiguration" args="key">
+		return this.configurations.get(key);
+	</method>
+	
+	<method name="parseWMSConfiguration" args="pointer">
+	<![CDATA[
+		//Debug.write("PARSING WMS CONFIGURATION");
+		var opts = pointer.xpathQuery("wmsextopts");
+		var conf = new wmsmapconfiguration();
+		
+		if (!opts)
+			return conf;
+			
+		var nodes = opts.childNodes;
+		
+		for (var i=0;i<nodes.length;i++)
+			switch(nodes[i].nodeName){
+				case "version" : conf.setVersion(nodes[i].childNodes[0].data);
+			}
+		
+		return conf;
+	]]>
+	</method>
+	
+	<method name="parseGoogleConfiguration" args="pointer">
+	</method>
+
+	<method name="parseConfiguration" args="dp">
+	<![CDATA[
+		var confdp = dp.dupePointer();
+		var conftype = confdp.p.getAttr("type");
+		var configuration = new mapconfiguration();
+		
+		switch (conftype){
+			case "wms" : configuration = this.parseWMSConfiguration(confdp);break;
+			case "google" : configuration = this.parseGoogleConfiguration(confdp);break;
+		}
+		
+		configuration.setConfigurationName(confdp.p.getAttr('name'));
+				
+		var ref = confdp.xpathQuery("referencesurl");
+		if (ref)
+			configuration.setReferencesUrl(ref.childNodes[0].data);
+		
+		var layers = confdp.xpathQuery("layers");
+				
+		if (layers){
+			var excludeall = (layers.getAttr("excludeAll") == "true");
+			configuration.setExcludeAll(excludeall);
+			
+			for (var i=0; i< layers.childNodes.length;i++){
+				var layernode = layers.childNodes[i];
+				if (layernode.nodeName == "excludedlayer")
+					configuration.addExcludedLayer(new layer(null, {layername: layernode.getAttr('name')}));
+					
+				if (layernode.nodeName == "includedlayer")
+					configuration.addIncludedLayer(new layer(null, {layername: layernode.getAttr('name')}));
+			}
+		}
+				
+		var defservers = confdp.xpathQuery("defaultservers");
+		for (var i=0; i<defservers.childNodes.length;i++){
+			var servernode = defservers.childNodes[i];
+			var server = new mapserver();					
+			server.setServerName(servernode.childNodes[0].data);
+			server.setUrl(servernode.getAttr('url'));
+			server.setProxied(servernode.getAttr('proxied') == 'true');					
+			if (server.isProxied)
+				server.setProxyUrl(servernode.getAttr('proxyurl'));
+						
+			configuration.addDefaultServer(server);
+		}
+				
+		var serverlist = confdp.xpathQuery("serverlist");
+		for (var i=0; i<serverlist.childNodes.length;i++){
+			var servernode = serverlist.childNodes[i];
+			var server = new mapserver();
+			server.setServerName(servernode.childNodes[0].data);
+			server.setUrl(servernode.getAttr('url'));
+			server.setProxied(servernode.getAttr('proxied') == "true");
+			if (server.isProxied)
+				server.setProxyUrl(servernode.getAttr('proxyurl'));
+					
+			configuration.addServer(server);
+		}		
+				
+		var maxloc = confdp.xpathQuery("maxlocation");
+		if (maxloc){
+			var cs = maxloc.getAttr('srs');
+			var mbbox = new boundingbox();
+			mbbox.setSrs(this.getSrs(cs));
+			
+			for (var i=0; i<maxloc.childNodes.length;i++){
+				var node = maxloc.childNodes[i];
+		
+				if (node.nodeName== "minlatitude")
+					mbbox.setMiny(parseInt(node.childNodes[0].data));
+										
+				if (node.nodeName== "minlongitude")
+					mbbox.setMinx(parseInt(node.childNodes[0].data));
+					
+				if (node.nodeName== "maxlongitude")
+					mbbox.setMaxx(parseInt(node.childNodes[0].data));
+				
+				if (node.nodeName== "maxlatitude")
+					mbbox.setMaxy(parseInt(node.childNodes[0].data));
+			}
+			//Debug.inspect(mbbox)
+			configuration.setMaxLocation(mbbox);
+		}
+				
+		var loc = confdp.xpathQuery("defaultlocation");				
+		if (loc){
+			var cs = loc.getAttr('srs');
+			var bbox = new boundingbox();
+			bbox.setSrs(this.getSrs(cs));
+			
+			for (var i=0; i<loc.childNodes.length;i++){
+				var node = loc.childNodes[i];
+			
+				if (node.nodeName== "minlatitude")
+					bbox.setMiny(parseInt(node.childNodes[0].data));
+										
+				if (node.nodeName== "minlongitude")
+					bbox.setMinx(parseInt(node.childNodes[0].data));
+					
+				if (node.nodeName== "maxlongitude")
+					bbox.setMaxx(parseInt(node.childNodes[0].data));
+					
+				if (node.nodeName== "maxlatitude")
+					bbox.setMaxy(parseInt(node.childNodes[0].data));
+			}
+					
+			configuration.setDefaultLocation(bbox);
+		}
+		
+		return configuration;
+	]]>
+	</method>
+	
+	<method name="getSrs" args="srsname">
+		switch (srsname){
+						case "epsg4326" : return new epsg4326srs(null) ;break;
+						case "mercator" :return new mercatorsrs(null) ;break;
+						case "pixel" : return new pixelsrs(null); break;
+					}
+					
+		return new srs(null);
+	</method>
+
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

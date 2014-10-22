@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+	<class name="stringutil">
+		<method name="replace" args="text,c1,c2">
+	      <![CDATA[
+	      var arr = text.split(c1);
+	      return arr.join(c2);            
+	      ]]>
+	    </method>
+    
+		<method name="isString" args="a">
+	      <![CDATA[
+		    return typeof a == 'string';
+	      ]]>
+	    </method>
+
+		<method name="trim" args="s">
+	      <![CDATA[
+			var aEntry = s.split(' ');
+			var tEntry = new Array();
+			for (var n = 0; n < aEntry.length; n++) {
+				if (aEntry[n] != '') {
+					tEntry.push(aEntry[n]);
+				}
+			}
+			return tEntry.join(" ");
+	      ]]>
+	    </method>
+			
+    </class>
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

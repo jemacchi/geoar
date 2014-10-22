@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="factory.lzx" />
+<include href="googlemap.lzx" />
+<include href="googletile.lzx" />
+<include href="../view/googletilevisor.lzx" />
+<include href="../controllers/googletilecontroller.lzx" />
+
+<class name="googlefactory" extends="factory">
+
+	<method name="getNewTileVisor" args="parentview">
+		var newtilevisor = new googletilevisor(parentview);
+		newtilevisor.setTile(this.getNewTile());
+		return newtilevisor;
+	</method>
+
+	<method name="getNewTileController">
+		return new googletilecontroller();
+	</method>
+	
+	<method name="getNewMap">
+		return new googlemap();
+	</method>
+	
+	<method name="getNewTile">
+		return new googletile();
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

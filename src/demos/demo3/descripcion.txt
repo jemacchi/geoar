@@ -1,0 +1,2 @@
+Esta demo muestra un mapa como el de la demo1 pero en lugar de usar WMS utiliza acceso a
+los mapas de Google (debe proveer de las mismas herramientas que en la demo1)

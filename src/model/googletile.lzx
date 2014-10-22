@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="tile.lzx" />
+
+<class name="googletile" extends="tile">
+	<attribute name="tx" type="number" value="0" />
+	<attribute name="ty" type="number" value="0" />
+	
+	<method name="getTileX">
+		return this.tx;
+	</method>
+
+	<method name="getTileY">
+		return this.ty;
+	</method>
+	
+	<method name="setTileX" args="t">
+		this.tx = t;
+		//Debug.write("SETTING TILE X: " + this.tx);
+	</method>
+	
+	<method name="setTileY" args="t">
+		this.ty = t;
+	</method>
+
+	<method name="getRequestQueryString">
+	<![CDATA[
+		if  (this.map == null)
+			return "";
+		
+		var query= this.map.getServerUrl();
+		
+		query += "v=" + new String(this.map.getV());
+		query += "&x=" + new String(this.tx);
+		query += "&y=" + new String(this.ty);
+		query += "&zoom=" + new String(this.map.getZoom());
+		
+		//Debug.write(query);
+		return "";
+	]]>
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

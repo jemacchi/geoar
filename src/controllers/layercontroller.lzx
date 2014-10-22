@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="layercontroller" >
+	<attribute name="layer" value="null" />
+	<attribute name="layerview" value="null" />
+	
+	<method name="setLayerView" args="lv">
+		this.setAttribute("layerview", lv);
+		new LzDelegate(this, "selectLayer", this.layerview, "onuserselection");
+		new LzDelegate(this, "layerUp", this.layerview, "onlayerup");
+		new LzDelegate(this, "layerDown", this.layerview, "onlayerdown");
+	</method>
+	
+	<handler name="onlayerview">
+		new LzDelegate(this, "setLayer", this.layerview, "onsetlayer");
+	</handler>
+	
+	<method name="setLayer">
+		this.layer = this.layerview.getLayer();
+	</method>
+	
+	<method name="selectLayer" args="s">
+		this.layer.setSelected(s);
+	</method>
+	
+	<method name="layerUp">
+		this.layer.onlevelup.sendEvent(this.layer.getPosition());
+	</method>
+	
+	<method name="layerDown">
+		this.layer.onleveldown.sendEvent(this.layer.getPosition());
+	</method>
+	
+</class>		
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

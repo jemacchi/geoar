@@ -1,0 +1,2 @@
+Esta demo muestra un mapa como el de la demo2 pero en el mapa principal muestra un mapa 
+de Google, mientras que en el del contexto se muestra un mapa de DEMIS.

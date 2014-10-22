@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="abstracttile.lzx" />
+
+<class name="tile" extends="abstracttile">
+	<attribute name="references" value="${new Array()}" />
+	<attribute name="points" value="${new Array()}" />
+	<attribute name="tilewidth" type="number" value="0" />
+	<attribute name="tileheight" type="number" value="0" />
+	
+	<event name="onaddreference" />
+	
+	<method name="getTileWidth">
+		return this.tilewidth;
+	</method>
+	
+	<method name="setTileWidth" args="width">
+		this.tilewidth = width;
+	</method>
+	
+	<method name="getTileHeight">
+		return this.tileheight;
+	</method>
+	
+	<method name="setTileHeight" args="height">
+		this.tileheight = height;
+	</method>
+	
+	<method name="addReference" args="ref">
+		this.references.push(ref);
+		this.onaddreference.sendEvent(ref);
+	</method>
+	
+	<method name="addReferences" args="refs">
+	<![CDATA[
+		if (!refs)
+			return;
+		for (var i=0; i< refs.length; i++)
+			this.addReference(refs[i]);
+	]]>
+	</method>
+	
+	<method name="getReferences">
+		return this.references;
+	</method>
+	
+	<method name="clearReferences">
+		this.references = new Array();
+	</method>
+		
+	<method name="doRequest">
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="link">
+	<attribute name="sender" value="null" />
+	<attribute name="receiver" value="null" />
+	<attribute name="enablingeventsdel" value="${new Array()}" />
+	<attribute name="disablingeventsdel" value="${new Array()}" />
+	<attribute name="handlers" value="${new Array()}" />
+	<attribute name="active" type="boolean" value="true" />
+	<attribute name="constraints" value="${new Array()}" />
+	<attribute name="forcedisable" type="boolean" value="false" />
+	<attribute name="wasactive" type="boolean" value="false" />
+	
+	<event name="onactivelink" />
+	<event name="oninactivelink" />
+	
+	<handler name="onactive">
+		//Debug.write("CHECKING ACTIVE");
+		if (this.active)
+			this.onactivelink.sendEvent(); else
+			this.oninactivelink.sendEvent();
+	</handler>
+	
+	<method name="forceDisable">
+		this.forcedisable = true;
+		for (var i in this.handlers)
+			this.handlers[i].disable();
+	</method>
+	
+	<method name="forceEnable">
+		this.forcedisable = false;
+		if (!this.active)
+			return;
+			
+		for (var i in this.handlers)
+			this.handlers[i].enable();
+	</method>
+	
+	<method name="addEnablingEvent" args="ev">
+		this.enablingeventsdel.push(new LzDelegate(this, "enableLink" , this.sender, ev));
+	</method>
+	
+	<method name="addDisablingEvent" args="ev">
+		this.disablingeventsdel.push(new LzDelegate(this, "disableLink" , this.sender, ev));
+	</method>
+	
+	<method name="addConstraint" args="c">
+		new LzDelegate(this, "checkAvailability", c, "onremove");
+		new LzDelegate(this, "disableLink", c, "onapply");
+		this.constraints.push(c);
+	</method>
+	
+	<method name="checkAvailability">
+		Debug.write("CHECKING");
+		for (var i in this.constraints)
+			if (this.constraints[i].isApplied())
+				return;
+		
+		this.enableLink();
+	</method>
+	
+	<method name="isActive">
+		return this.active
+	</method>
+	
+	<method name="disable">
+		if (!active)
+			return;
+			
+		for (var i in this.handlers)
+			this.handlers[i].disable();				
+			
+		this.active = false;
+	</method>
+	
+	<method name="disableLink">
+		Debug.write("DISABLING LINK");
+		Debug.write(this);
+		this.disable();
+		this.setAttribute("active", false);
+	</method>
+	
+	<method name="enable">
+		if (active)
+			return;
+		
+		for (var i in this.handlers)
+			this.handlers[i].enable();
+		
+		this.active = true;
+	</method>
+
+	<method name="enableLink">
+		if (this.forcedisable)
+			return;
+			
+		Debug.write("ACTIVATING LINK");
+		Debug.write(this);
+		this.enable();
+		this.setAttribute("active", true);		
+	</method>
+	
+	<method name="setSender" args="s">
+		this.setAttribute("sender", s);
+	</method>
+	
+	<method name="getSender">
+		return this.sender;
+	</method>
+	
+	<method name="setReceiver" args="r">
+		this.setAttribute("receiver", r);
+	</method>
+	
+	<method name="getReceiver">
+		return this.receiver;
+	</method>
+	
+	<method name="addHandler" args="h">
+		h.setLink(this);
+		this.handlers.push(h);
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

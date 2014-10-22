@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="layerdescription.lzx" />
+<include href="simplepanel.lzx" />
+
+<class name="layerspanel" extends="simplepanel" >
+
+	<attribute name="showExcluded" type="boolean" value="false" />
+
+	<event name="onlayerup" />
+	<event name="onlayerdown" />
+
+	<attribute name="columns"  type="number" value="3"/>
+	<attribute name="map" value="null" />	
+	
+	<handler name="oninit">
+	<![CDATA[
+		if (this.map){
+			this.onmap.sendEvent();
+			this.fillLayers();
+			}
+	]]>	
+	</handler>
+	
+	<method name="fillLayers">
+	<![CDATA[
+		var layers;
+			
+		if (this.showExcluded)
+			layers = this.map.getSupportedLayers(); else
+			layers = this.map.getLayers();			
+			
+		Debug.write(layers);
+			
+		for (var i=0; i<layers.length;i++)
+			this.addLayer(layers[i]);
+		
+	]]>
+	</method>
+	
+	<handler name="onmap">
+		if (this.showExcluded)
+			new LzDelegate(this, "addLayer", this.map, "onaddsupportedlayer"); else
+			new LzDelegate(this, "addLayer", this.map, "onaddlayer");
+			
+		new LzDelegate(this, "moveUpLayer", this.map, "onmoveuplayer");
+		new LzDelegate(this, "moveDownLayer", this.map, "onmovedownlayer");
+	</handler>
+	
+	<method name="setMap" args="m">
+		this.setAttribute("map", m);
+		this.fillLayers();
+	</method>
+	
+	<method name="addLayer" args="layer">
+	<![CDATA[
+		var lc = this.fact.getLayerController();
+		var panelview = this.getPanelArea();
+		var nl = this.fact.getLayerDescription(panelview);
+		nl.setWidth(panelview.width);
+
+		lc.setLayerView(nl);
+		
+		nl.setLayer(layer);
+	]]>
+	</method>
+
+	<method name="moveUpLayer" args="l">
+	<![CDATA[	
+		var area = this.getPanelArea();
+		for (var i=0; i<area.subviews.length;i++)
+			if (area.subviews[i].getLayer() == l){
+				Debug.write("MOVING UP VIEW... ");
+				var swap = area.subviews[i-1];
+				var swapx = area.subviews[i-1].x;
+				var swapy = area.subviews[i-1].y;				
+				area.subviews[i-1].setX(area.subviews[i].x);
+				area.subviews[i-1].setY(area.subviews[i].y);
+				area.subviews[i-1] = area.subviews[i];				
+				area.subviews[i].setX(swapx);
+				area.subviews[i].setY(swapy);	
+				area.subviews[i] = swap;
+				return;
+			}
+	]]>
+	</method>
+	
+	<method name="moveDownLayer" args="l">
+	<![CDATA[
+		var area = this.getPanelArea();
+		for (var i=0; i<area.subviews.length;i++)
+			if (area.subviews[i].getLayer() == l){
+				Debug.write("MOVING DOWN VIEW... ");
+				var swap = area.subviews[i+1];
+				var swapx = area.subviews[i+1].x;
+				var swapy = area.subviews[i+1].y;
+				area.subviews[i+1].setX(area.subviews[i].x);
+				area.subviews[i+1].setY(area.subviews[i].y);
+				area.subviews[i+1] = area.subviews[i];				
+				area.subviews[i].setX(swapx);
+				area.subviews[i].setY(swapy);	
+				area.subviews[i] = swap;
+				return;
+			}
+	]]>	
+	</method>		
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

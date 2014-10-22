@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<include href="abstractcommand.lzx" />
+
+<class name="dragcommand" extends="abstractcommand">
+
+	<attribute name="delmouseup" value="null" />
+	<attribute name="delmousedown" value="null" />
+
+	<method name="register">
+		if (!this.delmouseup)
+			this.delmouseup = new LzDelegate(this, "stop", this.visor, "onmouseup"); else
+			this.delmouseup.enable();
+			
+		if (!this.delmousedown)
+			this.delmousedown = new LzDelegate(this, "execute", this.visor, "onmousedown"); else
+			this.delmousedown.enable();
+	</method>
+	
+	<method name="unregister">
+		this.delmouseup.disable();
+		this.delmousedown.disable();
+	</method>
+	
+	<method name="execute">
+		this.visor.applyDrag();
+	</method>
+	
+	<method name="stop">
+		this.visor.removeDrag();
+		this.visor.drawArea();
+	</method>
+	
+</class>
+
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

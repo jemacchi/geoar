@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<library>
+
+<class name="selectionbox" extends="view">
+	<attribute name="activated" type="boolean" value="${this.visible}" />
+	<attribute name="bordercolor" value="0xbac4d5" />
+	<attribute name="boxcolor" value="0x5381ce" />
+	<attribute name="draggeable" type="boolean" value="false" />
+	<attribute name="lastxcoord" type="number" value="0" />
+	<attribute name="lastycoord" type="number" value="0" />
+	<attribute name="defaultx" type="number" value="0" />
+	<attribute name="defaulty" type="number" value="0" />
+	
+	<event name="onstartdrag" />
+	<event name="onstopdrag" />
+	
+	<method name="activate">
+		this.setVisible(true);
+		this.bringToFront();
+	</method>
+	
+	<method name="deactivate">
+		this.reset();
+	</method>
+	
+	<method name="reset">		
+		//Debug.write("RESETING");
+		this.setAttribute('x', 0);
+		this.setAttribute('y', 0);
+		this.setAttribute('width', 0);
+		this.setAttribute('height', 0);
+		this.setAttribute('lastx', 0);
+		this.setAttribute('lasty', 0);
+	</method>
+	
+	<method name="setInitialPos" args="pos">
+		this.setAttribute('x',  x);
+	</method>
+	
+	<method name="applyDrag">
+		if (this.draggeable){
+			this.dragger.apply();
+			this.onstartdrag.sendEvent();
+			this.bringToFront();
+		}
+	</method>
+	
+	<method name="removeDrag">
+		if (this.draggeable){
+			this.dragger.remove();
+			this.onstopdrag.sendEvent();
+		}
+	</method>
+	
+	<handler name="onmousedown">
+		this.applyDrag();
+	</handler>
+	
+	<handler name="onmouseup">
+		this.removeDrag();
+	</handler>
+	
+	<dragstate name="dragger"/>
+	
+	<view name="selectionview" width="${parent.width}" height="${parent.height}">
+		<stableborderlayout axis="y"/>
+		<view bgcolor="#BAC4D5" height="1" width="${parent.width}"/>
+	
+		<view  width="${parent.width}" height="${parent.height}">
+			<stableborderlayout axis="x"/>		
+			<view bgcolor="${classroot.bordercolor}" width="1" height="${parent.height}"/>
+			<view bgcolor="${classroot.boxcolor}" opacity="0.5" height="${parent.height}"/>
+			<view bgcolor="${classroot.bordercolor}" width="1" height="${parent.height}"/>
+		</view>
+	
+		<view bgcolor="#BAC4D5" height="1" width="${parent.width}"/>		 
+	</view>
+
+</class>								
+</library>
+<!-- 
+    Geoar - An Open Source and Rich WMS/WFS Client
+    Copyright (C) 2006  José Macchi 
+
+    This software is subject to the terms of the Common Public License
+    Agreement, available at the following URL:
+    http://www.opensource.org/licenses/cpl.html .
+    You must accept the terms of that agreement to use this software.
+
+    Contact:
+    http://geoar.sourceforge.net
+    author:Jose Macchi - jemacchi at yahoo.com.ar
+ -->

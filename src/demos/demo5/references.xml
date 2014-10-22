@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<map name="x">
+	<layer name="test" type="points">
+		<srs name="EPGS:4356"/>
+		<references>
+			<point id="1" x="-59.9" y="-35.88" icon="../../images/house.png">
+				<house title="CASA 1" imageurl="casas/casa1.jpg" >
+					<description>Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Maecenas porta sodales elit. Maecenas vehicula velit et massa. Quisque euismod odio sed nulla.</description>
+				</house>
+		    	</point> 
+		    	<point id="2" x="-67.5" y="-37.46" icon="../../images/house.png">
+				<house title="CASA 2" imageurl="casas/casa2.jpg" >
+					<description>Sed pretium. Pellentesque ultrices, ligula et facilisis gravida, dolor mi ornare eros, vitae gravida turpis turpis sed augue. Cras metus.</description>
+				</house>
+		    	</point>
+				<point id="3" x="-59.139" y="-37.32" icon="../../images/house.png">
+					<house title="CASA 3" imageurl="casas/casa3.jpg" >
+						<description>Phasellus faucibus pharetra nibh. Phasellus ullamcorper ultrices tortor. Sed sapien lorem, volutpat sed, ullamcorper vel, accumsan vitae, leo</description>
+					</house>
+		    	</point>
+		</references>
+	</layer> 
+</map> 
